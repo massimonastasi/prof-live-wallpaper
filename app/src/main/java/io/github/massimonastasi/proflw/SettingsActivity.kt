@@ -176,22 +176,73 @@ class SettingsActivity : AppCompatActivity() {
             if (!checked) return@addOnButtonCheckedListener
             val fps = values[ids.indexOf(id).coerceAtLeast(0)]
             prefs.edit { putString(Settings.KEY_FPS, fps.toString()) }
+            knock(
+                when (id) {
+                    R.id.fps_10 -> Settings.Knock.TEN
+                    R.id.fps_20 -> Settings.Knock.TWENTY
+                    // 15 fps is in neither position, so it ends the attempt rather than
+                    // standing in for the one that is expected next.
+                    else -> Settings.Knock.NONE
+                },
+            )
         }
     }
 
     private fun showSwitches() {
         switchRow(
             R.id.row_readout, R.string.settings_readout, R.string.settings_readout_note,
-            Settings.KEY_READOUT, default = true,
+            Settings.KEY_READOUT, default = true, onTap = { knock(Settings.Knock.READOUT) },
         )
         switchRow(
             R.id.row_god, R.string.settings_god_mode, R.string.settings_god_mode_note,
-            Settings.KEY_GOD_MODE, default = false,
+            Settings.KEY_GOD_MODE, default = false, onTap = { knock(Settings.Knock.GOD) },
         )
-        switchRow(
+
+        val unlocked = Settings.debugUnlocked(prefs)
+        findViewById<View>(R.id.row_debug).isVisible = unlocked
+        if (unlocked) switchRow(
             R.id.row_debug, R.string.settings_debug, R.string.settings_debug_note,
             Settings.KEY_DEBUG, default = false,
         )
+    }
+
+    // ------------------------------------------------------------------ the knock
+
+    /*
+     * The debug overlay is a developer's readout, so its row is not on the screen until
+     * somebody who knows where to press finds it. The sequence and the counting rule are in
+     * [Settings.Knock]; what is left here is only the part that needs an Activity.
+     */
+
+    private var knocked = 0
+
+    private val disarm = Runnable { knocked = 0 }
+
+    /**
+     * A step of the sequence, and nothing at all until the first one.
+     *
+     * While [knocked] is zero this returns on the opening line for every control except the
+     * readout row: there is deliberately no watcher counting taps across the screen, only a
+     * count that the readout row starts and that forgets itself after
+     * [KNOCK_TIMEOUT_MS] or on the first control that is not next in the sequence.
+     */
+    private fun knock(step: Int) {
+        if (Settings.debugUnlocked(prefs)) return
+        if (knocked == 0 && step != Settings.Knock.SEQUENCE[0]) return
+
+        val row = findViewById<View>(R.id.row_readout)
+        row.removeCallbacks(disarm)
+        knocked = Settings.Knock.advance(knocked, step)
+        if (!Settings.Knock.complete(knocked)) {
+            if (knocked > 0) row.postDelayed(disarm, KNOCK_TIMEOUT_MS)
+            return
+        }
+
+        knocked = 0
+        prefs.edit { putBoolean(Settings.KEY_DEBUG_UNLOCKED, true) }
+        showSwitches()
+        shapeGroup(R.id.switch_group)
+        toast(getString(R.string.settings_debug_unlocked))
     }
 
     /**
@@ -485,7 +536,14 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun switchRow(id: Int, label: Int, caption: Int, key: String, default: Boolean) {
+    private fun switchRow(
+        id: Int,
+        label: Int,
+        caption: Int,
+        key: String,
+        default: Boolean,
+        onTap: (() -> Unit)? = null,
+    ) {
         val root = findViewById<View>(id)
         root.findViewById<View>(R.id.row_radio).visibility = View.GONE
         row(id, label, getString(caption))
@@ -500,6 +558,7 @@ class SettingsActivity : AppCompatActivity() {
             prefs.edit { putBoolean(key, on) }
             toggle.isChecked = on
             root.isActivated = on
+            onTap?.invoke()
         }
     }
 
@@ -573,5 +632,8 @@ class SettingsActivity : AppCompatActivity() {
          * which is the flat band this replaced.
          */
         const val SCRIM_REACH = 2
+
+        /** How long the knock waits for its next step before forgetting it was started. */
+        const val KNOCK_TIMEOUT_MS = 5_000L
     }
 }

@@ -55,6 +55,7 @@
     <string name="settings_overlay_note">A second veil over it, for the icon labels</string>
     <string name="settings_debug">Debug mode</string>
     <string name="settings_debug_note">Wave, skill level and the time to the next pickup, down the top left.</string>
+    <string name="settings_debug_unlocked">Debug mode is now in the list above.</string>
     <string name="settings_god_mode">God mode</string>
     <string name="settings_god_mode_note">No damage. The marine never dies, so the difficulty only ever climbs.</string>
     <string name="settings_version">Version %s</string>
