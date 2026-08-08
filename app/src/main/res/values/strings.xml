@@ -99,5 +99,8 @@
     <string name="settings_report_note">Opens GitHub with the details filled in. Nothing is sent until you send it</string>
     <string name="settings_report_crash_note">It crashed last time. The report is ready, with the trace attached</string>
     <string name="no_browser">No app on this device can open a web page.</string>
+    <!-- Drawn on the wallpaper itself when no WAD could be read: the only place a user
+         with a broken wallpaper will look. One line per line drawn. -->
+    <string name="wallpaper_error">The WAD could not be loaded.\nOpen this app\'s settings and\nuse “Report a problem”.</string>
 </resources>
 

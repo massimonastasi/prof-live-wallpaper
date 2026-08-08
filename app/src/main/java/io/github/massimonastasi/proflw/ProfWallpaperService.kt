@@ -875,7 +875,7 @@ class ProfWallpaperService : WallpaperService() {
             canvas.drawRect(0f, 0f, frame.width().toFloat(), frame.height().toFloat(), floorPaint)
         }
 
-        /** Solid colour overlays: the black curtain and the no-WAD placeholder. */
+        /** Solid colour overlays: the black curtain and the background wash. */
         private val overlay = Paint()
 
         /**
@@ -975,14 +975,30 @@ class ProfWallpaperService : WallpaperService() {
             )
         )
 
-        /** Visible placeholder when the WAD is missing: better than a silent black screen. */
+        /**
+         * What is drawn when the WAD is missing: the reason, and where to report it.
+         *
+         * Plain system text, like the debug readout and for the same reason - the WAD's own
+         * glyphs are exactly what is unavailable here.
+         */
+        private val errorPaint = Paint().apply {
+            color = Color.WHITE
+            isAntiAlias = true
+            textSize = 28f * densityScale
+            textAlign = Paint.Align.CENTER
+            setShadowLayer(4f, 0f, 0f, Color.BLACK)
+        }
+
         private fun drawPlaceholder(canvas: Canvas) {
-            overlay.color = Color.rgb(220, 60, 30)
-            overlay.alpha = 255
-            val w = frame.width() * 0.2f
-            val progress = (tic % (TICRATE * 4)).toFloat() / (TICRATE * 4)
-            val x = progress * (frame.width() + w) - w
-            canvas.drawRect(x, 0f, x + w, frame.height().toFloat(), overlay)
+            // ponytail: split per frame, three short lines at 40fps costs nothing measurable.
+            val lines = getString(R.string.wallpaper_error).split('\n')
+            val step = errorPaint.textSize * 1.4f
+            val x = frame.width() / 2f
+            var y = (frame.height() - (lines.size - 1) * step) / 2f
+            for (line in lines) {
+                canvas.drawText(line, x, y, errorPaint)
+                y += step
+            }
         }
     }
 

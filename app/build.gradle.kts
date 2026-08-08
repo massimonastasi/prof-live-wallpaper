@@ -25,7 +25,7 @@ android {
          * arithmetic leaves room for 100 patches and 100 minors per major, and is monotonic
          * as long as the name only ever goes up.
          */
-        versionName = "1.0.0"
+        versionName = "1.0.1"
         versionCode = versionName!!.split(".").map { it.toInt() }
             .let { (major, minor, patch) -> major * 10000 + minor * 100 + patch }
     }

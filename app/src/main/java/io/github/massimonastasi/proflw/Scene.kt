@@ -295,6 +295,7 @@ class Scene(
 
     private var tic = 0
     private var player: Actor? = null
+    private var demonCount = 0
     private var nextWaveAt = 0
     private var deadUntil = 0
 
@@ -400,12 +401,6 @@ class Scene(
         sortByDepth()
     }
 
-    private fun countDemons(): Int {
-        var n = 0
-        for (a in actors) if (a.creature != null && !a.isPlayer && !a.dead) n++
-        return n
-    }
-
     /**
      * The pace of the game: the marine arrives first and stays alone for a few seconds,
      * then the enemies come in one at a time. The next wave only starts once nobody is
@@ -464,7 +459,7 @@ class Scene(
             return
         }
 
-        if (countDemons() > 0) {
+        if (demonCount > 0) {
             nextWaveAt = 0
             return
         }
@@ -518,6 +513,7 @@ class Scene(
     private fun restart() {
         actors.clear()
         player = null
+        demonCount = 0
         deadUntil = 0
         nextWaveAt = 0
         wave = 0
@@ -688,6 +684,7 @@ class Scene(
     private fun materialise(a: Actor) {
         spawnFog(a.x, a.y)
         actors.add(a)
+        if (a.creature != null && !a.isPlayer) demonCount++
         newTarget(a)
     }
 
@@ -1145,6 +1142,7 @@ class Scene(
 
         if (target.health <= 0) {
             target.dead = true
+            if (!target.isPlayer) demonCount--
             begin(target, Mode.DEATH, c.death)
             target.spawnTic = tic
             return
