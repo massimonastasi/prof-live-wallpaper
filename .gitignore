@@ -36,3 +36,11 @@ keystore.properties
 /docs/PLAN.md
 /docs/DESIGN.md
 /docs/ROADMAP.md
+/docs/STORE-LISTING.md
+/docs/RELEASE-*.md
+/FIXES-*.md
+/IDEA.md
+
+# Assistant tooling. Session state and indexes, machine-local by nature.
+/.claude/
+/.serena/
