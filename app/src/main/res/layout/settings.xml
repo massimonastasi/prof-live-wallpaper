@@ -39,7 +39,7 @@
             android:layout_height="match_parent"
             android:contentDescription="@null"
             android:scaleType="centerCrop"
-            android:src="@mipmap/ic_launcher_foreground" />
+            android:src="@drawable/settings_header" />
 
         <!--
             The title is white over artwork whose brightness is not ours to control, so it

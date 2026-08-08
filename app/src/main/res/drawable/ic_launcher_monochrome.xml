@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    The monochrome layer of the launcher icon: the same infinity the artwork draws, reduced
-    to one stroked outline.
+    The monochrome layer of the launcher icon: the glasses the artwork wears, reduced to one
+    stroked outline.
 
     It cannot be the full-bleed foreground the other two layers use. Themed icons keep only
     the alpha channel and fill it with the system's own colour, so a painting that is opaque
@@ -18,9 +18,9 @@
 
     <path
         android:strokeColor="#000000"
-        android:strokeWidth="8"
+        android:strokeWidth="5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M54,54 C46,66 35,71 28,65 C21,59 21,49 28,43 C35,37 46,42 54,54 C62,66 73,71 80,65 C87,59 87,49 80,43 C73,37 62,42 54,54 Z" />
+        android:pathData="M24,42 h20 a6,6 0 0 1 6,6 v12 a6,6 0 0 1 -6,6 h-20 a6,6 0 0 1 -6,-6 v-12 a6,6 0 0 1 6,-6 z M64,42 h20 a6,6 0 0 1 6,6 v12 a6,6 0 0 1 -6,6 h-20 a6,6 0 0 1 -6,-6 v-12 a6,6 0 0 1 6,-6 z M50,48 h8" />
 
 </vector>
