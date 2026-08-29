@@ -219,7 +219,10 @@ object WadStore {
             else -> null
         }
     } catch (e: WadFile.NotAWadException) {
-        context.getString(R.string.wad_not_a_wad, e.message ?: "")
+        // The header the file turned out to have is diagnostics, not an explanation. It goes to
+        // the log, where it is worth something; the user is told what to pick instead.
+        Log.w(TAG, "not a WAD: ${e.message}")
+        context.getString(R.string.wad_not_a_wad)
     } catch (e: Exception) {
         Log.w(TAG, "WAD check failed", e)
         context.getString(R.string.wad_unreadable)

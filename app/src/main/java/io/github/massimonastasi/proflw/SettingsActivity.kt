@@ -86,12 +86,15 @@ class SettingsActivity : AppCompatActivity() {
     private val chooseWad = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri ?: return@registerForActivityResult
         val problem = WadStore.import(this, uri)
-        toast(problem ?: getString(R.string.wad_imported))
-        if (problem == null) {
-            // A new WAD brings its own palette, so the swatches have to be re-read.
-            loadPalette()
-            prefs.edit { putString(Settings.KEY_SPRITES, Settings.SPRITES_USER) }
+        if (problem != null) {
+            explain(R.string.wad_rejected, problem)
+            showSprites()
+            return@registerForActivityResult
         }
+        toast(getString(R.string.wad_imported))
+        // A new WAD brings its own palette, so the swatches have to be re-read.
+        loadPalette()
+        prefs.edit { putString(Settings.KEY_SPRITES, Settings.SPRITES_USER) }
         showSprites()
         showBackground()
     }
@@ -162,7 +165,7 @@ class SettingsActivity : AppCompatActivity() {
 
         // After showSprites, which is the call that notices: the file is discarded the first
         // time anybody asks for it, and this is where the user finds out why it is gone.
-        if (WadStore.takeStaleNotice(this)) toast(getString(R.string.wad_stale))
+        if (WadStore.takeStaleNotice(this)) explain(R.string.wad_stale_title, getString(R.string.wad_stale))
     }
 
     // ------------------------------------------------------------------ sections
@@ -622,6 +625,21 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun toast(text: String) = Toast.makeText(this, text, Toast.LENGTH_LONG).show()
+
+    /**
+     * For what the user must not miss, where a toast would not do.
+     *
+     * A toast is not shown at all when the user has refused this app's notifications, which is
+     * what happens by default on Android 13 - the message is composed, handed to the system and
+     * dropped. A rejected WAD import announced that way is indistinguishable from an import that
+     * silently did nothing, which is exactly how it was reported to us. A dialog cannot be
+     * suppressed by a permission, so anything that explains a refusal goes through here.
+     */
+    private fun explain(title: Int, message: String) = AlertDialog.Builder(this)
+        .setTitle(title)
+        .setMessage(message)
+        .setPositiveButton(android.R.string.ok, null)
+        .show()
 
     private companion object {
         /**
