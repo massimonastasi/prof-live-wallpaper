@@ -80,6 +80,15 @@ class ProfWallpaperService : WallpaperService() {
     private var loadedWad: String? = null
 
     /**
+     * The same file said out loud, for the debug readout.
+     *
+     * Not [loadedWad]: that is an absolute path into private storage, and every imported WAD
+     * has the same one. What the reader needs is the name they chose the file under, which is
+     * the only thing that tells two imports apart.
+     */
+    private var wadLabel = BUNDLED
+
+    /**
      * The active WAD's PLAYPAL, kept so a flat backdrop colour can be named by palette index.
      *
      * An index rather than an ARGB value means the choice follows the WAD: pick "red" and a
@@ -137,7 +146,12 @@ class ProfWallpaperService : WallpaperService() {
             sprites = GameData.spritePrefixes.map { SpriteSet(w, it) }
             val missing = GameData.spritePrefixes.filterIndexed { i, _ -> sprites[i].frameCount == 0 }
             loadedWad = source
-            Log.i(TAG, "WAD loaded from $source: ${w.lumpCount} lumps, " +
+            wadLabel = if (user != null) {
+                WadStore.name(this) ?: getString(R.string.wad_unnamed)
+            } else {
+                BUNDLED
+            }
+            Log.i(TAG, "WAD loaded from $wadLabel ($source): ${w.lumpCount} lumps, " +
                 "${sprites.size - missing.size}/${sprites.size} sprites" +
                 if (missing.isEmpty()) "" else " (missing: $missing)")
         } catch (e: Exception) {
@@ -148,6 +162,7 @@ class ProfWallpaperService : WallpaperService() {
             if (user != null) {
                 WadStore.clear(this)
                 loadedWad = null
+                wadLabel = BUNDLED
                 loadWad()
             }
         }
@@ -908,9 +923,10 @@ class ProfWallpaperService : WallpaperService() {
         }
 
         /**
-         * What the fight will not say by itself: which rung it is on, which wave, and how
-         * long until the next drop. Off by default and plain system text - the WAD's numerals
-         * are the ten digits and nothing else, so they cannot spell any of this.
+         * What the fight will not say by itself: which rung it is on, which wave, how long
+         * until the next drop, and which WAD it is all drawn from. Off by default and plain
+         * system text - the WAD's numerals are the ten digits and nothing else, so they
+         * cannot spell any of this.
          */
         private val debugPaint = Paint().apply {
             color = Color.WHITE
@@ -936,10 +952,17 @@ class ProfWallpaperService : WallpaperService() {
             val x = debugPaint.textSize / 2f
             val step = debugPaint.textSize * 1.2f
             var y = debugTop + debugPaint.textSize
-            canvas.drawText("wave ${s.wave + 1}/${GameData.waves.size}", x, y, debugPaint)
-            y += step
-            canvas.drawText("skill ${s.skill + 1} ${GameData.skills[s.skill]}", x, y, debugPaint)
-            canvas.drawText("drop in ${s.ticsToDrop / TICRATE}s", x, y + step, debugPaint)
+            for (line in arrayOf(
+                "wave ${s.wave + 1}/${GameData.waves.size}",
+                "skill ${s.skill + 1} ${GameData.skills[s.skill]}",
+                "drop in ${s.ticsToDrop / TICRATE}s",
+                // Last because it is the slowest to change: it moves on an import or a
+                // reset and never during a fight, so it belongs under the three that do.
+                "wad $wadLabel",
+            )) {
+                canvas.drawText(line, x, y, debugPaint)
+                y += step
+            }
         }
 
         /**

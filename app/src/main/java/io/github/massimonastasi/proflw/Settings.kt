@@ -102,7 +102,8 @@ object Settings {
     fun debugUnlocked(p: SharedPreferences): Boolean = p.getBoolean(KEY_DEBUG_UNLOCKED, false)
 
     /**
-     * Which rung, which wave, and how long until the next drop, drawn over the fight.
+     * Which rung, which wave, how long until the next drop and which WAD is loaded, drawn
+     * over the fight.
      *
      * Gated on the unlock rather than only hidden with it: a build that shipped with the
      * switch left on would otherwise draw the overlay over a screen that no longer has a way

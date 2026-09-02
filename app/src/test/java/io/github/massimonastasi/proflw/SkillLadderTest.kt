@@ -23,9 +23,14 @@ import kotlin.test.assertTrue
 import org.junit.Test
 
 /**
- * When the rung moves, and so when the background does: only the kill that empties the last
- * wave of the table moves it. Reported twice - the floor kept turning over mid-table, and a
- * death kept taking it back to the first one.
+ * When the rung moves, and so when the background does.
+ *
+ * Two rules, and they pull in opposite directions on purpose. Up: only the kill that empties
+ * the last wave of the table climbs a rung, never a wave and never a creature - the floor
+ * kept turning over mid-table and it was reported as a fault. Down: a death gives back the
+ * whole ladder at once. That second one was tried both ways. Keeping the rung across a death
+ * reads well written down and plays badly, because a marine who dies on the hardest rung is
+ * handed it again on the next tic and dies there for as long as the wallpaper is on.
  */
 class SkillLadderTest {
 
@@ -38,7 +43,9 @@ class SkillLadderTest {
         var previousSkill = scene.skill
         for (t in 1..TICRATE * 900) {
             scene.tick(t)
-            if (scene.skill != previousSkill) {
+            // Climbs only. A fall is the other rule and has its own test: it happens on the
+            // restart after a death, which is any wave at all.
+            if (scene.skill > previousSkill) {
                 // The counter has not moved yet: the wave just cleared is still the current one.
                 assertEquals(
                     GameData.waves.lastIndex,
@@ -50,5 +57,32 @@ class SkillLadderTest {
             previousSkill = scene.skill
         }
         assertTrue(scene.skill >= 0, "the rung went below the bottom")
+    }
+
+    @Test
+    fun `a death gives the whole ladder back`() {
+        GameData.clearRandom()
+        val scene = Scene(720, 1600)
+        // The only way to see a marine on a rung above the first: an honest one dies long
+        // before he finishes a table. Switched off again below, which is what makes the
+        // death this test is about possible at all.
+        scene.invulnerable = true
+
+        var t = 0
+        while (scene.skill == 0 && t < TICRATE * 3600) scene.tick(++t)
+        assertTrue(scene.skill > 0, "the ladder never left the first rung in an hour")
+
+        scene.invulnerable = false
+        var skillAtDeath = -1
+        while (!scene.dying && t < TICRATE * 7200) {
+            skillAtDeath = scene.skill
+            scene.tick(++t)
+        }
+        assertTrue(scene.dying, "the marine never died with the invulnerability off")
+        assertTrue(skillAtDeath > 0, "he died on the first rung, which proves nothing")
+
+        // Through the black curtain to the restart on the other side of it.
+        while (scene.dying && t < TICRATE * 7200) scene.tick(++t)
+        assertEquals(0, scene.skill, "the death left the ladder on rung ${scene.skill + 1}")
     }
 }
