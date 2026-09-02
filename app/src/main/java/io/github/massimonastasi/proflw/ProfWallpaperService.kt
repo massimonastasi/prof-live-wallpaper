@@ -39,6 +39,7 @@ import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.WindowInsets
 import android.view.WindowManager
+import java.io.File
 import java.nio.channels.FileChannel
 import kotlin.math.abs
 
@@ -126,6 +127,7 @@ class ProfWallpaperService : WallpaperService() {
     private fun loadWad() {
         val user = activeWad()
         val source = user?.absolutePath ?: BUNDLED
+        val identity = wadIdentity(user)
         try {
             val buf = if (user != null) {
                 user.inputStream().use { it.channel.map(FileChannel.MapMode.READ_ONLY, 0, user.length()) }
@@ -145,7 +147,7 @@ class ProfWallpaperService : WallpaperService() {
             loadDigits(w)
             sprites = GameData.spritePrefixes.map { SpriteSet(w, it) }
             val missing = GameData.spritePrefixes.filterIndexed { i, _ -> sprites[i].frameCount == 0 }
-            loadedWad = source
+            loadedWad = identity
             wadLabel = if (user != null) {
                 WadStore.name(this) ?: getString(R.string.wad_unnamed)
             } else {
@@ -204,10 +206,24 @@ class ProfWallpaperService : WallpaperService() {
         return out
     }
 
+    /**
+     * What identifies the loaded WAD, for the one question asked of it: is this still the
+     * file the sprites were built from?
+     *
+     * The path alone cannot answer it. Every import is reduced onto the same
+     * files/wads/active.wad, so swapping one IWAD for another leaves the name identical and
+     * the reload never fired - the fight went on drawing the file before it until something
+     * else happened to rebuild the sprites. The stamp and the size move with the contents,
+     * which is what the question is really about. Two different reductions landing on the
+     * same byte count in the same millisecond would fool this, and nothing here is worth a
+     * digest of four megabytes to rule that out.
+     */
+    private fun wadIdentity(user: File?): String =
+        if (user == null) BUNDLED else "${user.absolutePath}@${user.lastModified()}:${user.length()}"
+
     /** Reloads if the active WAD has changed since the sprites were built. */
     private fun reloadWadIfChanged() {
-        val wanted = activeWad()?.absolutePath ?: BUNDLED
-        if (wanted != loadedWad) loadWad()
+        if (wadIdentity(activeWad()) != loadedWad) loadWad()
     }
 
     /**
