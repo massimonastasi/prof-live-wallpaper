@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        The header, landscape. 220dp of a portrait screen is a picture; 220dp of a landscape
+        one is most of the window, and with the button bar under it the settings list had
+        nothing left - report 6549, M-01. The artwork is still there and still the first thing
+        seen, at a height that leaves the page room to be a page. The list's top padding reads
+        the same name, so it follows on its own.
+    -->
+    <dimen name="header_height">120dp</dimen>
+</resources>

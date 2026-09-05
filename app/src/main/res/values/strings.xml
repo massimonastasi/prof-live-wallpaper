@@ -22,7 +22,7 @@
     <string name="settings_reset_done">Everything is back to how it started.</string>
     <string name="photo_imported">Photo loaded.</string>
     <string name="settings_wad">Use your own WAD</string>
-    <string name="settings_wad_note">Point this at an IWAD you already own - the .wad file that came with the game, doom.wad or doom2.wad and their like - and its sprites, palette, floors and numerals replace the bundled ones. The file is copied into this app and never leaves your device.</string>
+    <string name="settings_wad_note">Point this at an IWAD you already own - the .wad file that came with the game - and its sprites, palette, floors and numerals replace the bundled ones. The file is copied into this app and never leaves your device.</string>
     <string name="wad_imported">WAD loaded. The wallpaper will use it the next time it is shown.</string>
     <string name="wad_unreadable">That file could not be read.</string>
     <string name="wad_not_a_wad">That file is not a WAD. Choose the .wad file from a game you already own.</string>
@@ -30,18 +30,26 @@
     <string name="wad_stale_title">Your imported WAD was removed</string>
     <string name="wad_no_sprites">That WAD has none of the sprites this wallpaper draws.</string>
     <!--
-        Names no other game. Some IWADs use an entirely different set of creature names and
-        cannot drive this wallpaper, but saying which ones would put their trademarks in the
-        APK for no benefit: the message has to help the user, and knowing that this file does
-        not carry the right creatures is the whole of the help.
+        Nothing on this screen names another game. Some IWADs use an entirely different set of
+        creature names and cannot drive this wallpaper, but saying which ones would put their
+        trademarks in the APK for no benefit: the message has to help the user, and knowing
+        that this file does not carry the right creatures is the whole of the help.
+
+        The same rule took the file names out of settings_wad_note. Listing the ones that work
+        is a statement about somebody else's product and reads as an invitation to go and find
+        it. The user who owns one knows what it is called.
     -->
     <string name="wad_too_few">That WAD carries only %d of the creatures this wallpaper draws. It names its creatures differently, so it cannot be used.</string>
     <string name="settings_about">About</string>
     <!--
-        Freedoom comes first here, before the licence facts and before the author, because
-        every pixel on the screen is theirs. The order of a credits screen is the credit.
+        The order is the argument, not a ranking. What this app is, where the idea came from,
+        which source could be used and why that makes it GPL, and then - because that is the
+        point the reader is now ready for - which artwork could not be used, and whose is here
+        instead. Freedoom last of the three because it answers the paragraph above it.
+
+        No game is named in any of it. See the note above settings_wad_note.
     -->
-    <string name="settings_about_note">Everything you see here is Freedoom. Every sprite, every colour, every floor is the Freedoom project\'s artwork, made over twenty years by volunteers and given away freely. This app draws it and does nothing else with it: without their work there would be nothing to show, because the alternative was shipping game data that is not ours to give. Freedoom is a complete free game in its own right, and it deserves to be played, not only borrowed from.\n\nFree, no adverts, no network access, no data collected, and no permissions requested.\n\nBack in 2011 James Gittins put the fight itself on your home screen, and a lot of us left it running there for years. It stopped installing on modern Android long ago. This is not a port or a revival: no code or asset is shared, everything here was written from nothing, and the artwork is Freedoom\'s. What carried over is the idea, and it deserved to still work. Thanks, James.\n\nThe movement, the timings and the creature values are read from the linuxdoom-1.10 source release, which is why this app is GPL-2.0. Every such value carries a comment naming the file and symbol it came from.\n\nThis project is independent. Neither the Freedoom project nor any other rights holder endorses or is involved in it.\n\nMade by Massimo \&quot;Prof\&quot; Nastasi.</string>
+    <string name="settings_about_note">Free, with no adverts, no network access, no data collected and no permissions requested.\n\nBack in 2011 James Gittins put the fight itself on your home screen, and a lot of us left it running there for years. It stopped installing on modern Android long ago. This is not a port or a revival: no code and no asset is shared, and everything here was written from nothing. What carried over is the idea, and it deserved to still work. Thanks, James.\n\nThe movement, the timings and the creature values are read from the linuxdoom-1.10 source release, which is GPL-2.0 - and so, by obligation, is this app. Every such value carries a comment naming the file and the symbol it came from.\n\nThe artwork could not come from the same place. That source was released; the graphics that shipped with the game were not, and they are still somebody\'s copyright. So none of them are here, and nothing on this screen is drawn from them. Freedoom is the alternative, and it is an excellent one: every sprite, every colour, every floor you see is the Freedoom project\'s, made over twenty years by volunteers and given away to anyone who wants it. It is a complete game in its own right, not a stand-in for one. Without it there would be nothing to show, and it deserves to be played, not only borrowed from.\n\nThis project is independent. Neither the Freedoom project nor any other rights holder endorses or is involved in it.\n\nMade by Massimo \&quot;Prof\&quot; Nastasi.</string>
     <string name="settings_licences">Licences and notices</string>
     <string name="settings_set_wallpaper">Set as wallpaper</string>
     <string name="licences_missing">%s could not be read. The licences it carries still apply; they are in the project repository.</string>
@@ -51,7 +59,7 @@
     -->
     <!-- Section one: everything that changes what you see. -->
     <string name="settings_visual">Visual settings</string>
-    <string name="settings_visual_note">The scene always thinks at the original 35 steps a second. The frame rate is only how often it is drawn, and it is the one setting here that changes battery use. Ten lasts longest on a charge, twenty is the smoothest, fifteen is where it starts.</string>
+    <string name="settings_visual_note">The scene always thinks at the original 35 steps a second. The frame rate is only how often it is drawn, and it is the one setting here that changes battery use. Ten lasts longest on a charge, twenty is the smoothest, and twenty is where it starts.</string>
     <string name="settings_readout_note">Bottom of the screen</string>
     <string name="settings_overlay">Darken the background</string>
     <string name="settings_overlay_note">A second veil over it, for the icon labels</string>

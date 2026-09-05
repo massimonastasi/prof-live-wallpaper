@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The two actions, pinned to the bottom of the settings screen and not part of the page
+    that scrolls under them. Its own file because the landscape variant is the same two
+    buttons in a row rather than a column - see layout-land/button_bar.xml. Everything the
+    code touches is here: the id of the bar, which takes the navigation-bar inset, and the
+    ids of the buttons.
+
+    Overdraw is a false positive here: this is not the window background but a bar
+    pinned over a page that scrolls under it, so it has to paint its own surface.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/button_bar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:background="?attr/colorSurface"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:ignore="Overdraw">
+
+    <!--
+        Text rather than outlined: it sits under the filled primary action, and M3 pairs a
+        filled button with a text one so the two do not compete. An outline gave this the
+        same visual weight as "Set as wallpaper", which is not what it is.
+    -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/reset"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_reset" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/set_wallpaper"
+        style="@style/Widget.Material3.Button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/settings_set_wallpaper"
+        tools:ignore="VisualLintButtonSize" />
+
+</LinearLayout>

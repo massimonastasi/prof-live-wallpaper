@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Landscape: the same two buttons on one row.
+
+    A landscape window is short, and this bar and the header behind it were taking nearly all
+    of it - report 6549, M-01, where the settings list came out as a strip with one heading in
+    it. Side by side, the bar costs one button and one margin instead of two of each, and the
+    page above gets the rest back. The header gives up its own share in values-land/dimens.xml.
+
+    Order is M3's: the text button first, the filled primary action at the end, where a
+    right-to-left layout will also put it because these are start and end margins.
+
+    The reset stays the wider of the two by weight, because "Set as wallpaper" is the shorter
+    label and a filled button does not need help being found.
+
+    Overdraw is a false positive here: this is not the window background but a bar
+    pinned over a page that scrolls under it, so it has to paint its own surface.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/button_bar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:background="?attr/colorSurface"
+    android:baselineAligned="false"
+    android:orientation="horizontal"
+    android:padding="16dp"
+    tools:ignore="Overdraw">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/reset"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/settings_reset" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/set_wallpaper"
+        style="@style/Widget.Material3.Button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_weight="1"
+        android:text="@string/settings_set_wallpaper"
+        tools:ignore="VisualLintButtonSize" />
+
+</LinearLayout>

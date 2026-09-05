@@ -103,6 +103,16 @@
                 style="@style/SectionParagraph"
                 android:text="@string/settings_visual_note" />
 
+            <!--
+                Each button has saveEnabled="false", for the reason list_row.xml sets out at
+                length: the checked state of this group lives on its buttons, view state is
+                restored after onCreate has already read the preferences, and resetting the
+                settings calls recreate(), which carries that state across. Restoring a button
+                here also fires the group's listener, which writes the old rate back into the
+                preferences - so a reset put the frame rate back on the screen and in storage
+                both. The rate's home is SharedPreferences and showFrameRate reads it on every
+                start; there is nothing here worth restoring.
+            -->
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/fps_group"
                 style="@style/Widget.Material3.MaterialButtonGroup.Connected"
@@ -121,6 +131,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:saveEnabled="false"
                     android:text="@string/fps_10" />
 
                 <com.google.android.material.button.MaterialButton
@@ -129,6 +140,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:saveEnabled="false"
                     android:text="@string/fps_15" />
 
                 <com.google.android.material.button.MaterialButton
@@ -137,6 +149,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:saveEnabled="false"
                     android:text="@string/fps_20" />
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
@@ -317,37 +330,7 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <LinearLayout
-        android:id="@+id/button_bar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="?attr/colorSurface"
-        android:orientation="vertical"
-        android:padding="16dp">
-
-        <!--
-            Text rather than outlined: it sits under the filled primary action, and M3 pairs a
-            filled button with a text one so the two do not compete. An outline gave this the
-            same visual weight as "Set as wallpaper", which is not what it is.
-        -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/reset"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/settings_reset" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/set_wallpaper"
-            style="@style/Widget.Material3.Button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/settings_set_wallpaper"
-            tools:ignore="VisualLintButtonSize" />
-
-    </LinearLayout>
+    <include layout="@layout/button_bar" />
 
     <!--
         The status bar scrim, and the last child so it is over everything.
