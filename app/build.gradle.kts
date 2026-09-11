@@ -6,7 +6,6 @@ import java.io.ByteArrayOutputStream
 
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
 }
 
 android {
@@ -25,7 +24,7 @@ android {
          * arithmetic leaves room for 100 patches and 100 minors per major, and is monotonic
          * as long as the name only ever goes up.
          */
-        versionName = "1.1.4"
+        versionName = "1.1.5"
         versionCode = versionName!!.split(".").map { it.toInt() }
             .let { (major, minor, patch) -> major * 10000 + minor * 100 + patch }
     }
@@ -61,7 +60,7 @@ android {
             signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
         }
     }
 
@@ -79,9 +78,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
     }
 }
 
@@ -106,7 +102,7 @@ dependencies {
  *
  * Copied rather than duplicated so the repository files stay the single source of truth.
  */
-val copyLicences by tasks.registering(Copy::class) {
+val copyLicences = tasks.register<Copy>("copyLicences") {
     from(rootProject.file("LICENSE"), rootProject.file("NOTICE.md"))
     into(layout.projectDirectory.dir("src/main/assets"))
 }

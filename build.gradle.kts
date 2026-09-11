@@ -1,7 +1,6 @@
-// ponytail: pinned to AGP 8.9 / Kotlin 2.0.21. AGP 9.x compiles fine, but its Maven-fetched
-// aapt2 is blocked by Smart App Control on this machine (a binary with no reputation yet).
-// Upgrade to AGP 9.x once that binary is trusted, or before publishing.
+// ponytail: AGP 9.x brings Kotlin with it, so no Kotlin plugin is declared here. Play asked
+// for 9.0 or later; this is the current stable. Optimized resource shrinking is the default
+// from 9.0 on, which is the whole reason for the move - no flag to set.
 plugins {
-    id("com.android.application") version "8.9.0" apply false
-    id("org.jetbrains.kotlin.android") version "2.0.21" apply false
+    id("com.android.application") version "9.4.0" apply false
 }

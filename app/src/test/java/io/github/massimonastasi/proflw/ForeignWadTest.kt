@@ -21,7 +21,7 @@ package io.github.massimonastasi.proflw
 import java.io.File
 import java.io.RandomAccessFile
 import java.nio.channels.FileChannel
-import kotlin.test.Test
+import org.junit.Test
 import kotlin.test.assertTrue
 
 /**
