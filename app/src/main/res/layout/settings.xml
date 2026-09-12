@@ -81,28 +81,6 @@
 
     </FrameLayout>
 
-    <!--
-        Three pages, one scroll view, one visible at a time.
-
-        Not a ViewPager2: that is a dependency this app does not have and fragments this app
-        does not use, for three pages that never animate between each other. The tabs swap
-        which child is visible and that is the whole mechanism.
-
-        It is not an app bar either, which the comment at the top of this file rules out - no
-        title, no back arrow, nothing that suggests a place to go back to. It is pinned under
-        the artwork rather than scrolling with the page, because tabs you have to scroll back
-        up to reach are tabs nobody uses.
-    -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabs"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/tab_height"
-        android:layout_gravity="top"
-        android:layout_marginTop="@dimen/header_height"
-        android:background="?attr/colorSurfaceContainer"
-        app:tabGravity="fill"
-        app:tabMode="fixed" />
-
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -301,6 +279,7 @@
                 tools:visibility="visible">
 
                 <TextView
+                    android:id="@+id/record_header"
                     style="@style/SectionHeader"
                     android:text="@string/stats_record" />
 
@@ -413,6 +392,26 @@
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
+
+    <!--
+        Three pages, one scroll view, one visible at a time.
+
+        Not a ViewPager2: that is a dependency this app does not have and fragments this app
+        does not use, for three pages that never animate between each other. The tabs swap
+        which child is visible and that is the whole mechanism.
+
+        It is not an app bar either, which the comment at the top of this file rules out - no
+        title, no back arrow, nothing that suggests a place to go back to. It is pinned under
+        the artwork rather than scrolling with the page, because tabs you have to scroll back
+        up to reach are tabs nobody uses.
+    -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabs"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/tab_height"
+        android:layout_gravity="top"
+        android:layout_marginTop="@dimen/header_height"
+        android:theme="@style/ThemeOverlay.Tabs" />
 
     <include layout="@layout/button_bar" />
 

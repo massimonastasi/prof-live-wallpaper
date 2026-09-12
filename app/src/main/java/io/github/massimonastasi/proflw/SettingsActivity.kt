@@ -479,6 +479,9 @@ class SettingsActivity : AppCompatActivity() {
         val group = findViewById<LinearLayout>(R.id.record_group)
         group.removeAllViews()
         val runs = Settings.completions(prefs)
+        // The heading goes with the row: "Record" over nothing reads like a missing record
+        // rather than like a marine who has not finished the hardest table yet.
+        findViewById<View>(R.id.record_header).isVisible = runs > 0
         if (runs <= 0) {
             group.isVisible = false
             return
@@ -522,8 +525,6 @@ class SettingsActivity : AppCompatActivity() {
                 isVisible = true
             }
         }
-        row.isClickable = false
-        row.isFocusable = false
         if (group.childCount > 0) {
             (row.layoutParams as? ViewGroup.MarginLayoutParams)
                 ?.topMargin = resources.getDimensionPixelSize(R.dimen.list_row_gap)

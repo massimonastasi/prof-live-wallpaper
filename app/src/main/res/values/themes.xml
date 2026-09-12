@@ -29,6 +29,25 @@
         <item name="android:textColor">?attr/colorPrimary</item>
     </style>
 
+    <!--
+        The tab strip, which asks for nothing except a different surface to sit on.
+
+        Material 3 tabs draw their own background: @drawable/m3_tabs_background is a two-layer
+        list that fills the container and then lays a 1dp colorOutlineVariant divider along the
+        bottom - the divider the specification shows for both the primary and the secondary
+        variant. Setting android:background on the view replaces that drawable and takes the
+        divider with it, which is exactly what this screen used to do.
+
+        So the container colour is changed the way the component expects instead: the drawable
+        reads ?attr/colorSurface, and this remaps that one attribute for the tab strip alone,
+        to the surface the page beneath it already uses. The library keeps its background, the
+        divider comes back, and nothing else in the subtree moves - the labels read
+        colorOnSurface and the indicator colorPrimary, neither of which is touched here.
+    -->
+    <style name="ThemeOverlay.Tabs" parent="">
+        <item name="colorSurface">?attr/colorSurfaceContainer</item>
+    </style>
+
     <!-- The explanation under a section header. -->
     <style name="SectionParagraph">
         <item name="android:layout_width">match_parent</item>
