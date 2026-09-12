@@ -3,6 +3,8 @@
 An Android live wallpaper: an endless battle on your home screen. Free, no ads, no
 permissions, no network access, nothing collected.
 
+**[On Google Play](https://play.google.com/store/apps/details?id=io.github.massimonastasi.proflw)**, or as a signed APK on every [release](../../releases).
+
 Free is a condition, not a stance: the engine source this borrows from is published "for your
 non-profit use", so this application carries no advertising, no paid version and no purchases,
 and neither may anything derived from it. See [NOTICE.md](NOTICE.md).
@@ -117,8 +119,16 @@ actually have. Thanks, James.
 
 ## Install
 
-A signed APK is attached to each [release](../../releases). Android will ask you to allow
-installing from outside the store; that is expected for an app distributed this way.
+**[Google Play](https://play.google.com/store/apps/details?id=io.github.massimonastasi.proflw)** is the
+short way, and it keeps itself updated.
+
+A signed APK is attached to each [release](../../releases) as well. Installing that one,
+Android asks you to allow installing from outside the store; that is expected.
+
+**Pick one channel and stay on it.** Play re-signs what it distributes, so the two downloads
+carry different certificates and a phone holding one cannot update to the other — Android
+refuses, and the only way across is to uninstall, which takes your settings and the
+completed-table count with it.
 
 After installing, open it and use **Set as wallpaper**, or go to
 *Settings → Wallpaper → Live wallpapers*.
@@ -127,7 +137,10 @@ Requires Android 12 or newer.
 
 ### Checking that a build came from here
 
-Every release is signed with the same key. Its certificate fingerprint is:
+This applies to the **APK from a release here**, not to the one Play installs: Play signs its
+own copies with a key Google holds, so their certificate differs by design.
+
+Every release published here is signed with the same key. Its certificate fingerprint is:
 
 ```
 SHA-256  bb44dbc7c7af228c396ce7446b474ee85c4dbc56ca0aa823b39aa4ebf775477e
