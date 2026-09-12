@@ -16,10 +16,14 @@
     Two things have no Material component for Views and are styles of ours, marked as such in
     themes.xml: the section header and the paragraph under it. Everything else is the library's.
 
-    Layers, bottom to top: the header, the page over it, the buttons. The header does not
-    move - the page slides up over it, so the title stays where it is and is covered rather
-    than carried away. There is no app bar: it held only a back arrow, which sat under the
-    status bar icons, and this is the launcher activity, where back means leaving the app.
+    Layers, bottom to top: the header and its tabs, the page under them, the buttons. The
+    artwork scrolls away and the tab strip comes to rest at the top, which is what an
+    AppBarLayout is for - the strip used to be pinned by hand at the artwork's height, and on
+    a scrolled page it hung in the middle of the screen with rows passing behind it.
+
+    There is still no app bar in the sense that mattered: no title, no back arrow. This is the
+    launcher activity, where back means leaving the app, and AppBarLayout here is a scrolling
+    container rather than a bar with controls on it.
 -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -27,12 +31,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     tools:context=".SettingsActivity">
+
+    <!--
+        fitsSystemWindows so the strip lands *under* the status bar once the artwork has
+        scrolled away. Without it the tabs collapse to y=0 and the clock sits on top of
+        "Settings" - which is what the separate status scrim used to paper over, back when
+        nothing up here ever moved.
+    -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorSurfaceContainer"
+        android:fitsSystemWindows="true"
+        app:liftOnScroll="false">
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/header_height"
-        android:layout_gravity="top">
+        app:layout_scrollFlags="scroll">
 
         <ImageView
             android:layout_width="match_parent"
@@ -81,11 +99,31 @@
 
     </FrameLayout>
 
+    <!--
+        Three pages, one scroll view, one visible at a time.
+
+        Not a ViewPager2: that is a dependency this app does not have and fragments this app
+        does not use, for three pages that never animate between each other. The tabs swap
+        which child is visible and that is the whole mechanism.
+
+        It is the AppBarLayout's second child and carries no scroll flags, so the artwork
+        above it scrolls away and the strip comes to rest at the top. Tabs you have to scroll
+        back up to reach are tabs nobody uses; tabs pinned by hand halfway down the screen,
+        which is what this was before, are worse.
+    -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabs"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/tab_height"
+        android:theme="@style/ThemeOverlay.Tabs" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingTop="@dimen/content_top">
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -392,26 +430,6 @@
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
-
-    <!--
-        Three pages, one scroll view, one visible at a time.
-
-        Not a ViewPager2: that is a dependency this app does not have and fragments this app
-        does not use, for three pages that never animate between each other. The tabs swap
-        which child is visible and that is the whole mechanism.
-
-        It is not an app bar either, which the comment at the top of this file rules out - no
-        title, no back arrow, nothing that suggests a place to go back to. It is pinned under
-        the artwork rather than scrolling with the page, because tabs you have to scroll back
-        up to reach are tabs nobody uses.
-    -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabs"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/tab_height"
-        android:layout_gravity="top"
-        android:layout_marginTop="@dimen/header_height"
-        android:theme="@style/ThemeOverlay.Tabs" />
 
     <include layout="@layout/button_bar" />
 

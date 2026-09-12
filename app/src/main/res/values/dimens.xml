@@ -6,17 +6,18 @@
         over it from there.
     -->
     <dimen name="header_height">220dp</dimen>
-    <!--
-        The tab strip, and where the page starts because of it. Two names rather than one sum
-        written twice: the strip is pinned under the header, so the scrolling content has to
-        clear both, and getting the two out of step is the kind of mistake that only shows up
-        as a row half-hidden behind the tabs.
-    -->
+    <!-- The tab strip. The page below it is positioned by the AppBarLayout, not by us. -->
     <dimen name="tab_height">48dp</dimen>
-    <dimen name="content_top">268dp</dimen>
     <!--
         The gap between rows of a segmented list. The library gives the rows their shapes and
         their padding but not the space between them, because that belongs to the group.
     -->
     <dimen name="list_row_gap">2dp</dimen>
+    <!--
+        A statistics row and the portrait in it. 40dp is enough for a sprite to be recognised
+        at a glance - most creatures are around 40x60 pixels - without turning the list into a
+        gallery that has to be scrolled past to reach the numbers.
+    -->
+    <dimen name="stat_sprite_size">40dp</dimen>
+    <dimen name="stat_row_height">64dp</dimen>
 </resources>

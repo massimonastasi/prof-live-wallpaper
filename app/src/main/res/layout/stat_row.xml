@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    One row of the statistics list: a portrait, and a number.
+
+    Not an <include> of list_row.xml, which is built for a control - the leading position there
+    belongs to a radio button, and the only place left for a count was the caption, under the
+    label, where a description goes. Fourteen numbers stacked under fourteen names do not read
+    as a table and cannot be compared down the column, which is the whole point of a count.
+
+    Here the number is trailing and right-aligned, so the counts form a column. The card and its
+    style are the same as every other row on the screen, so shapeGroup() gives these the same
+    corners as the rest.
+
+    The portrait carries saveEnabled="false" for the reason list_row.xml sets out at length:
+    these rows are inflated repeatedly into the same parents, every copy shares these ids, and
+    view state is restored by id.
+-->
+<com.google.android.material.listitem.ListItemCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget.Material3.ListItemCardView.Segmented"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:swipeEnabled="false"
+    tools:shapeAppearance="@style/ShapeAppearance.Material3.MediumComponent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:minHeight="@dimen/stat_row_height"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <!--
+            The creature or the pickup, as it appears in whichever WAD is active - so importing
+            one changes every portrait here while the counts stay exactly where they were.
+
+            fitCenter because the sprites are wildly different shapes: a Stimpack is 19x10 and
+            the Overlord is 256x100, and both have to sit in the same box without distortion.
+        -->
+        <ImageView
+            android:id="@+id/stat_sprite"
+            android:layout_width="@dimen/stat_sprite_size"
+            android:layout_height="@dimen/stat_sprite_size"
+            android:layout_marginEnd="16dp"
+            android:saveEnabled="false"
+            android:scaleType="fitCenter"
+            tools:src="@drawable/ic_completed" />
+
+        <!--
+            Shown when there is no portrait to show: a WAD that lacks a creature entirely, or a
+            lump that would not decode. A row with a blank where the picture should be says
+            nothing; a row with a name still says which creature it counts.
+        -->
+        <TextView
+            android:id="@+id/stat_label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="?attr/colorOnSurface"
+            tools:text="Zombie" />
+
+        <TextView
+            android:id="@+id/stat_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            tools:text="202" />
+
+    </LinearLayout>
+
+</com.google.android.material.listitem.ListItemCardView>

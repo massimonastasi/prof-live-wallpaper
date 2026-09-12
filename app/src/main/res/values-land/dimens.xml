@@ -8,6 +8,4 @@
         the same name, so it follows on its own.
     -->
     <dimen name="header_height">120dp</dimen>
-    <!-- The strip is the same height either way; only what it sits under has changed. -->
-    <dimen name="content_top">168dp</dimen>
 </resources>

@@ -19,7 +19,9 @@
 package io.github.massimonastasi.proflw
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -61,6 +63,15 @@ class SettingsActivity : AppCompatActivity() {
     /** The palette of whichever WAD is active, so the swatches show real colours. */
     private var palette = IntArray(256) { Color.BLACK }
 
+    /**
+     * One [SpriteSet] per sprite prefix, from the same WAD as [palette].
+     *
+     * Kept in a field on purpose: each set owns an LruCache of its own decoded frames, which
+     * only earns anything if the set outlives the row that asked for a portrait. Null until
+     * [loadWad] has run, and null again if it failed.
+     */
+    private var sprites: List<SpriteSet>? = null
+
     private val choosePhoto = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri ?: return@registerForActivityResult
         val ok = PhotoStore.import(this, uri)
@@ -94,18 +105,22 @@ class SettingsActivity : AppCompatActivity() {
             return@registerForActivityResult
         }
         toast(getString(R.string.wad_imported))
-        // A new WAD brings its own palette, so the swatches have to be re-read.
-        loadPalette()
+        // Selected first, so the re-read below sees the file it is about to draw with.
         prefs.edit { putString(Settings.KEY_SPRITES, Settings.SPRITES_USER) }
+        // A new WAD brings its own palette and its own sprites, so both are re-read - and the
+        // statistics are re-drawn, because the portraits there come from this file too. The
+        // counts do not move: they are keyed by lump name, not by which WAD is loaded.
+        loadWad()
         showSprites()
         showBackground()
+        showStatistics()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         CrashLog.install(this)
         setContentView(R.layout.settings)
-        loadPalette()
+        loadWad()
 
 
         // Read from the package rather than written down, so it cannot disagree with the
@@ -391,15 +406,30 @@ class SettingsActivity : AppCompatActivity() {
             select(R.id.row_wad, useUser)
             action(R.id.row_wad, R.drawable.ic_delete) { confirmDeleteWad() }
             shapeGroup(R.id.sprites_group)
-            wadRow.setOnClickListener {
-                prefs.edit { putString(Settings.KEY_SPRITES, Settings.SPRITES_USER) }
-                showSprites()
-            }
+            // These two rows change which WAD is active, so everything read from a WAD has to
+            // follow: the palette behind the swatches and the portraits in the statistics. They
+            // used to refresh only the radios, which left both showing the other file's
+            // artwork until the screen was reopened.
+            wadRow.setOnClickListener { chooseSprites(Settings.SPRITES_USER) }
             findViewById<View>(R.id.row_bundled).setOnClickListener {
-                prefs.edit { putString(Settings.KEY_SPRITES, Settings.SPRITES_BUNDLED) }
-                showSprites()
+                chooseSprites(Settings.SPRITES_BUNDLED)
             }
         }
+    }
+
+    /**
+     * Switches between the bundled sprites and an imported WAD, and re-reads everything that
+     * comes out of one.
+     *
+     * The counts are untouched by design: statistics are keyed by lump name, so changing WAD
+     * changes every portrait on the statistics page and moves no number on it.
+     */
+    private fun chooseSprites(which: String) {
+        prefs.edit { putString(Settings.KEY_SPRITES, which) }
+        loadWad()
+        showSprites()
+        showBackground()
+        showStatistics()
     }
 
     private fun showAbout() {
@@ -490,41 +520,43 @@ class SettingsActivity : AppCompatActivity() {
         // Formatted by the platform, so the order of day and month is the reader's own.
         val date = java.text.DateFormat.getDateInstance(java.text.DateFormat.LONG)
             .format(java.util.Date(Settings.firstCompletion(prefs)))
-        statRow(
+        recordRow(
             group,
             resources.getQuantityString(R.plurals.settings_completed_record, runs, runs),
             getString(R.string.settings_completed_first, date),
-            R.drawable.ic_completed,
         )
         shapeGroup(R.id.record_group)
     }
 
     /**
-     * One statistics row: a name, a number under it, and nothing to press.
+     * One statistics row: a portrait where there is one, a name where there is not, a count.
      *
      * Inflated rather than declared, because there is one per creature or pickup that has
-     * actually happened and that number is not known until the preferences are read. The
-     * radio, the switch and the chevron are all hidden - this row is a record, and the only
-     * thing it has in common with the controls above is the shape.
+     * actually happened and that is not known until the preferences are read.
+     *
+     * The name is always the content description even when the portrait replaces it on screen.
+     * A column of pictures with numbers beside them is silent to a screen reader otherwise, and
+     * that is not a corner worth cutting.
      */
-    private fun statRow(group: LinearLayout, label: String, caption: String, icon: Int? = null) {
-        val row = layoutInflater.inflate(R.layout.list_row, group, false)
-        row.findViewById<View>(R.id.row_radio).isVisible = false
-        row.findViewById<View>(R.id.row_switch).isVisible = false
-        row.findViewById<View>(R.id.row_action).isVisible = false
-        row.findViewById<TextView>(R.id.row_label).text = label
-        row.findViewById<TextView>(R.id.row_caption).apply {
-            text = caption
-            isVisible = caption.isNotEmpty()
+    private fun statRow(group: LinearLayout, name: String, count: Int, sprite: Bitmap?) {
+        val row = layoutInflater.inflate(R.layout.stat_row, group, false)
+        val image = row.findViewById<ImageView>(R.id.stat_sprite)
+        val label = row.findViewById<TextView>(R.id.stat_label)
+
+        if (sprite != null) {
+            // A BitmapDrawable rather than setImageBitmap, so the filter can be turned off:
+            // these are 40-pixel sprites blown up on a 3x screen, and bilinear filtering turns
+            // pixel art into porridge. The wallpaper draws them the same way.
+            image.setImageDrawable(BitmapDrawable(resources, sprite).apply { isFilterBitmap = false })
+            image.isVisible = true
+            label.text = ""
+        } else {
+            image.isVisible = false
+            label.text = name
         }
-        row.findViewById<ImageView>(R.id.row_icon).apply {
-            if (icon == null) {
-                isVisible = false
-            } else {
-                setImageResource(icon)
-                isVisible = true
-            }
-        }
+        row.contentDescription = name
+        row.findViewById<TextView>(R.id.stat_count).text = count.toString()
+
         if (group.childCount > 0) {
             (row.layoutParams as? ViewGroup.MarginLayoutParams)
                 ?.topMargin = resources.getDimensionPixelSize(R.dimen.list_row_gap)
@@ -532,10 +564,20 @@ class SettingsActivity : AppCompatActivity() {
         group.addView(row)
     }
 
+    /** The completion record, which has an icon of its own rather than a portrait. */
+    private fun recordRow(group: LinearLayout, label: String, caption: String) {
+        val row = layoutInflater.inflate(R.layout.stat_row, group, false)
+        row.findViewById<ImageView>(R.id.stat_sprite).setImageResource(R.drawable.ic_completed)
+        row.findViewById<TextView>(R.id.stat_label).text = label
+        row.findViewById<TextView>(R.id.stat_count).text = caption
+        row.contentDescription = "$label. $caption"
+        group.addView(row)
+    }
+
     /**
      * Fills the Statistics tab from the preferences.
      *
-     * Called on every resume rather than once: the wallpaper is still running while this
+     * Called on every tab selection rather than once: the wallpaper is still running while this
      * screen is open, so the numbers move underneath it.
      */
     private fun showStatistics() {
@@ -545,8 +587,12 @@ class SettingsActivity : AppCompatActivity() {
         val deaths = Statistics.deaths(prefs)
         val pickups = Statistics.pickups(prefs)
 
-        fill(R.id.kills_group, R.id.kills_header, kills.map { it.first.name to it.second })
-        fill(R.id.deaths_group, R.id.deaths_header, deaths.map { it.first.name to it.second })
+        fill(R.id.kills_group, R.id.kills_header, kills.map { (c, n) ->
+            Triple(c.name, n, portrait(c.spriteIndex))
+        })
+        fill(R.id.deaths_group, R.id.deaths_header, deaths.map { (c, n) ->
+            Triple(c.name, n, portrait(c.spriteIndex))
+        })
         fill(R.id.pickups_group, R.id.pickups_header, pickups.map { (item, n) ->
             val named = Statistics.itemName(item)
             val name = when {
@@ -554,7 +600,7 @@ class SettingsActivity : AppCompatActivity() {
                 item.kind == GameData.ITEM_WEAPON -> GameData.weapons[item.extra].name
                 else -> item.lumpPrefix
             }
-            name to n
+            Triple(name, n, portrait(item.spriteIndex))
         })
 
         // One sentence instead of four empty headings: a statistics page with nothing under
@@ -564,12 +610,12 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<View>(R.id.stats_empty).isVisible = !anything
     }
 
-    private fun fill(groupId: Int, headerId: Int, rows: List<Pair<String, Int>>) {
+    private fun fill(groupId: Int, headerId: Int, rows: List<Triple<String, Int, Bitmap?>>) {
         val group = findViewById<LinearLayout>(groupId)
         group.removeAllViews()
         findViewById<View>(headerId).isVisible = rows.isNotEmpty()
         group.isVisible = rows.isNotEmpty()
-        for ((name, n) in rows) statRow(group, name, n.toString())
+        for ((name, n, sprite) in rows) statRow(group, name, n, sprite)
         if (rows.isNotEmpty()) shapeGroup(groupId)
     }
 
@@ -692,7 +738,7 @@ class SettingsActivity : AppCompatActivity() {
             .setPositiveButton(R.string.wad_delete) { _, _ ->
                 WadStore.clear(this)
                 prefs.edit { putString(Settings.KEY_SPRITES, Settings.SPRITES_BUNDLED) }
-                loadPalette()
+                loadWad()
                 showSprites()
             }
             .setNegativeButton(android.R.string.cancel, null)
@@ -713,7 +759,7 @@ class SettingsActivity : AppCompatActivity() {
                 prefs.edit { clear() }
                 WadStore.clear(this)
                 PhotoStore.clear(this)
-                loadPalette()
+                loadWad()
                 // Recreated rather than refreshed: every row's value has changed underneath
                 // the views, and rebuilding is the honest way to show that.
                 recreate()
@@ -723,10 +769,24 @@ class SettingsActivity : AppCompatActivity() {
             .show()
     }
 
-    /** Reads the active WAD's palette, so the swatches are the wallpaper's own colours. */
-    private fun loadPalette() {
+    /**
+     * Reads the active WAD once, for both the swatches and the statistics portraits.
+     *
+     * One read rather than two because [WadStore.active] can *delete* a stale file as a side
+     * effect and the notice it leaves is one-shot: two separate reads could see two different
+     * answers about which WAD is in play.
+     *
+     * The condition is the wallpaper's own - `useUserWad` and then `active` - which it was not
+     * before. Reading `active` alone meant that importing a WAD and then selecting Bundled left
+     * the swatches showing the imported palette while the wallpaper drew Freedoom's. The
+     * portraits would have inherited that, and would have shown creatures from a file that is
+     * not on the home screen.
+     */
+    private fun loadWad() {
+        // Dropped before the new ones are built, so the old SpriteSets and their caches go.
+        sprites = null
         palette = try {
-            val user = WadStore.active(this)
+            val user = if (Settings.useUserWad(prefs)) WadStore.active(this) else null
             val buf = if (user != null) {
                 user.inputStream().use { it.channel.map(FileChannel.MapMode.READ_ONLY, 0, user.length()) }
             } else {
@@ -736,10 +796,32 @@ class SettingsActivity : AppCompatActivity() {
                 }
             }
             val wad = WadFile(buf)
+            // Built once and kept: each SpriteSet holds an LruCache of its own frames, which is
+            // only worth anything if the object outlives the row that asked for it. Rebuilding
+            // them per tab selection would re-decode every portrait every time.
+            sprites = GameData.spritePrefixes.map { SpriteSet(wad, it) }
             IntArray(256) { wad.paletteColor(it) }
         } catch (e: Exception) {
             IntArray(256) { Color.BLACK }
         }
+    }
+
+    /**
+     * The portrait for a creature or a pickup, or null when this WAD cannot draw it.
+     *
+     * Frame A, rotation 1 - standing, facing the viewer. It is the pair the rest of the app
+     * already treats as "show me this actor", and rotation 1 survives the WAD reducer, so it is
+     * there in the bundled asset and in anything imported.
+     *
+     * Three separate ways to come back empty, all of them real: the WAD has no lumps for this
+     * prefix, the prefix is there but that frame is not, or the lump refused to decode.
+     */
+    private fun portrait(spriteIndex: Int): Bitmap? {
+        val set = sprites?.getOrNull(spriteIndex) ?: return null
+        if (set.frameCount <= 0) return null
+        val packed = set.resolve(0, 1)
+        if (packed < 0) return null
+        return set.sprite(packed shr 1)?.bitmap
     }
 
     private fun toast(text: String) = Toast.makeText(this, text, Toast.LENGTH_LONG).show()
