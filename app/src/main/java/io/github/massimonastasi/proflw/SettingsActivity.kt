@@ -22,6 +22,9 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,7 +38,6 @@ import androidx.core.view.isEmpty
 import androidx.core.view.isVisible
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
-import com.google.android.material.chip.Chip
 import java.nio.channels.FileChannel
 
 /**
@@ -163,9 +165,43 @@ class SettingsActivity : AppCompatActivity() {
         shapeGroup(R.id.overlay_group)
         shapeGroup(R.id.about_group)
 
+        showTabs()
+
         // After showSprites, which is the call that notices: the file is discarded the first
         // time anybody asks for it, and this is where the user finds out why it is gone.
         if (WadStore.takeStaleNotice(this)) explain(R.string.wad_stale_title, getString(R.string.wad_stale))
+    }
+
+    /**
+     * The three pages, and the one mechanism behind them.
+     *
+     * Each tab owns a child of the scrolling column and the listener shows one and hides the
+     * other two. No pager, no fragments: those exist to keep pages alive off-screen and to
+     * animate between them, and these pages are three views that cost nothing to keep and do
+     * not animate.
+     *
+     * Statistics is filled on selection rather than up front, because the wallpaper is still
+     * running while this screen is open and the numbers move underneath it.
+     */
+    private fun showTabs() {
+        val pages = listOf(R.id.tab_settings, R.id.tab_statistics, R.id.tab_about)
+        val labels = listOf(R.string.tab_settings, R.string.tab_statistics, R.string.tab_about)
+        val tabs = findViewById<com.google.android.material.tabs.TabLayout>(R.id.tabs)
+
+        for (label in labels) tabs.addTab(tabs.newTab().setText(label))
+
+        fun show(index: Int) {
+            pages.forEachIndexed { i, id -> findViewById<View>(id).isVisible = i == index }
+            if (index == 1) showStatistics()
+        }
+
+        tabs.addOnTabSelectedListener(object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab) = show(tab.position)
+            override fun onTabUnselected(tab: com.google.android.material.tabs.TabLayout.Tab) = Unit
+            // Re-reads the numbers, which is the only thing tapping the current tab could mean.
+            override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab) = show(tab.position)
+        })
+        show(0)
     }
 
     // ------------------------------------------------------------------ sections
@@ -367,7 +403,6 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun showAbout() {
-        showCompleted()
 
         // Not a courtesy: GPL-2.0 section 3 requires that whoever receives the binary can get
         // the corresponding source, and for an application handed out as an APK this row is
@@ -422,37 +457,119 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     /**
-     * The completion marker, and the tooltip that carries what it knows.
+     * The completion record, as the first row of the Statistics tab.
      *
      * Absent until the wave table has been finished at the hardest skill. There is no row
      * saying "not yet": a screen that lists things that have not happened is a screen making
      * promises, and this is the one thing here that is earned rather than set.
      *
-     * An assist chip rather than a list row because of what it holds: a count and a date are
-     * a record, and a list row is a control. It is not clickable - there is nothing to open.
+     * ## It used to be a chip, and the chip truncated
      *
-     * ## Not a tooltip
+     * An assist chip was the shape for a while, on the argument that a count and a date are a
+     * record while a list row is a control. The argument was sound and the widget was not:
+     * `Chip` is single-line by construction, `ChipDrawable` ellipsizes the label to whatever
+     * width it is handed, and `maxLines`, `singleLine` and `ellipsize` are all overridden or
+     * ignored. "Finished 2 times, first on 28 July 2026" does not fit a 360dp phone and no
+     * attribute was going to make it.
      *
-     * A tooltip was the first shape tried, and Material 3 for Views has no public one. The
-     * library carries `TooltipDrawable` and a `Widget.Material3.Tooltip` style, which look
-     * like the obvious answer until lint refuses them in thirteen places: both are
-     * `@RestrictedApi(LIBRARY_GROUP)`, built for the Slider rather than for applications.
-     *
-     * The chip is better anyway. A tooltip hides its content behind a gesture almost nobody
-     * performs, and this is the one thing on the screen worth being seen.
+     * On a page of records the old objection stops applying, so the count is the label and
+     * the date is the caption, and both wrap.
      */
     private fun showCompleted() {
-        val chip = findViewById<Chip>(R.id.completed)
+        val group = findViewById<LinearLayout>(R.id.record_group)
+        group.removeAllViews()
         val runs = Settings.completions(prefs)
         if (runs <= 0) {
-            chip.visibility = View.GONE
+            group.isVisible = false
             return
         }
+        group.isVisible = true
         // Formatted by the platform, so the order of day and month is the reader's own.
         val date = java.text.DateFormat.getDateInstance(java.text.DateFormat.LONG)
             .format(java.util.Date(Settings.firstCompletion(prefs)))
-        chip.text = resources.getQuantityString(R.plurals.settings_completed_record, runs, runs, date)
-        chip.visibility = View.VISIBLE
+        statRow(
+            group,
+            resources.getQuantityString(R.plurals.settings_completed_record, runs, runs),
+            getString(R.string.settings_completed_first, date),
+            R.drawable.ic_completed,
+        )
+        shapeGroup(R.id.record_group)
+    }
+
+    /**
+     * One statistics row: a name, a number under it, and nothing to press.
+     *
+     * Inflated rather than declared, because there is one per creature or pickup that has
+     * actually happened and that number is not known until the preferences are read. The
+     * radio, the switch and the chevron are all hidden - this row is a record, and the only
+     * thing it has in common with the controls above is the shape.
+     */
+    private fun statRow(group: LinearLayout, label: String, caption: String, icon: Int? = null) {
+        val row = layoutInflater.inflate(R.layout.list_row, group, false)
+        row.findViewById<View>(R.id.row_radio).isVisible = false
+        row.findViewById<View>(R.id.row_switch).isVisible = false
+        row.findViewById<View>(R.id.row_action).isVisible = false
+        row.findViewById<TextView>(R.id.row_label).text = label
+        row.findViewById<TextView>(R.id.row_caption).apply {
+            text = caption
+            isVisible = caption.isNotEmpty()
+        }
+        row.findViewById<ImageView>(R.id.row_icon).apply {
+            if (icon == null) {
+                isVisible = false
+            } else {
+                setImageResource(icon)
+                isVisible = true
+            }
+        }
+        row.isClickable = false
+        row.isFocusable = false
+        if (group.childCount > 0) {
+            (row.layoutParams as? ViewGroup.MarginLayoutParams)
+                ?.topMargin = resources.getDimensionPixelSize(R.dimen.list_row_gap)
+        }
+        group.addView(row)
+    }
+
+    /**
+     * Fills the Statistics tab from the preferences.
+     *
+     * Called on every resume rather than once: the wallpaper is still running while this
+     * screen is open, so the numbers move underneath it.
+     */
+    private fun showStatistics() {
+        showCompleted()
+
+        val kills = Statistics.kills(prefs)
+        val deaths = Statistics.deaths(prefs)
+        val pickups = Statistics.pickups(prefs)
+
+        fill(R.id.kills_group, R.id.kills_header, kills.map { it.first.name to it.second })
+        fill(R.id.deaths_group, R.id.deaths_header, deaths.map { it.first.name to it.second })
+        fill(R.id.pickups_group, R.id.pickups_header, pickups.map { (item, n) ->
+            val named = Statistics.itemName(item)
+            val name = when {
+                named != null -> getString(named)
+                item.kind == GameData.ITEM_WEAPON -> GameData.weapons[item.extra].name
+                else -> item.lumpPrefix
+            }
+            name to n
+        })
+
+        // One sentence instead of four empty headings: a statistics page with nothing under
+        // any of them reads like a fault rather than like a marine who has just started.
+        val anything = Settings.completions(prefs) > 0 ||
+            kills.isNotEmpty() || deaths.isNotEmpty() || pickups.isNotEmpty()
+        findViewById<View>(R.id.stats_empty).isVisible = !anything
+    }
+
+    private fun fill(groupId: Int, headerId: Int, rows: List<Pair<String, Int>>) {
+        val group = findViewById<LinearLayout>(groupId)
+        group.removeAllViews()
+        findViewById<View>(headerId).isVisible = rows.isNotEmpty()
+        group.isVisible = rows.isNotEmpty()
+        for ((name, n) in rows) statRow(group, name, n.toString())
+        if (rows.isNotEmpty()) shapeGroup(groupId)
     }
 
     private fun openLicences() = startActivity(Intent(this, LicencesActivity::class.java))

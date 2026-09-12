@@ -7,6 +7,14 @@
     -->
     <dimen name="header_height">220dp</dimen>
     <!--
+        The tab strip, and where the page starts because of it. Two names rather than one sum
+        written twice: the strip is pinned under the header, so the scrolling content has to
+        clear both, and getting the two out of step is the kind of mistake that only shows up
+        as a row half-hidden behind the tabs.
+    -->
+    <dimen name="tab_height">48dp</dimen>
+    <dimen name="content_top">268dp</dimen>
+    <!--
         The gap between rows of a segmented list. The library gives the rows their shapes and
         their padding but not the space between them, because that belongs to the group.
     -->
