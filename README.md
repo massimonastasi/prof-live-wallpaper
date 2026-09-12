@@ -84,11 +84,25 @@ this wallpaper active throughout, read from `batterystats` per uid:
 | The screen | 486 | 20.6% |
 | **This wallpaper** | **116** | **4.9%** |
 
-**9.0 mA — 0.23% of a 4006 mAh battery per hour**, against a 2% target. An independent check
-from `/proc/<pid>/stat` over the same period gives 12.7% of one core, matching the sixty-second
-samples taken months earlier. A second method that bounds the same number from above puts the
-ceiling at 0.93%/hour; the honest claim is the range. Hidden — any full-screen app, the screen
-off — it costs **zero measured CPU ticks**.
+**9.0 mA — 0.23% of a 4006 mAh battery per hour.** An independent check from `/proc/<pid>/stat`
+over the same period gives 12.7% of one core, matching the sixty-second samples taken months
+earlier.
+
+**What the phone actually loses.** Four alternating half-hour windows on a Fairphone 6 on
+11 September 2026, this wallpaper against a static one, the difference between them being the
+cost: **about 1% of the battery an hour, between 0.8 and 1.4**. Method, tables and limits in
+[docs/BATTERY.md](docs/BATTERY.md).
+
+**Why the two disagree, and which one to believe.** Per-uid accounting models an app's power
+from its CPU time. It does not charge it for the display compositing that a surface changing
+twenty times a second keeps awake. So 0.23% is what the system *attributes* to this app, and
+about 1% is what you actually *lose* — and the second is the honest answer to "what does it
+cost me", which is why it is the one on the store listing. The two are closer than they look:
+the thirteen-hour measurement already bounded itself at 0.93%/hour from above, and the new
+range starts at 0.79%.
+
+Under a 2% target either way. Hidden — any full-screen app, the screen off — it costs
+**zero measured CPU ticks**, and that is where a phone spends its day.
 
 ## Where the idea comes from
 

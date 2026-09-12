@@ -18,6 +18,25 @@ The second row matters more than the first, because it is where a phone spends i
 and a window with a fullscreen app in front measured **0.00 seconds of CPU** over ten minutes.
 Not "almost nothing": nothing.
 
+## There was an earlier measurement, and it said something different
+
+`README.md` has carried a battery figure since before this campaign: **9.0 mA, 0.23% of a
+4006 mAh battery per hour**, taken over thirteen unplugged hours from `batterystats` per uid on
+the previous phone. The store listing published the same number, rounded to *"around 0.2%"*.
+
+That number is not wrong, it answers a different question. **Per-uid accounting models an app's
+power from its CPU time**, and does not charge it for the display compositing that a surface
+changing twenty times a second keeps awake. The windows below measure the whole device with and
+without the wallpaper, so that compositing lands where it belongs: on us.
+
+So: **0.23% is what the system attributes to this app; about 1% is what the phone loses.** The
+second is the honest answer to "what does it cost me", and as of 12 September 2026 it is the one
+on the store listing. The two methods are closer than the headline figures suggest - the earlier
+one already bounded itself at **0.93%/hour** from above, and the range below starts at 0.79%.
+
+The thirteen-hour run remains the better measurement of *duration*; this one is the better
+measurement of *what the user pays*.
+
 ## How it was measured
 
 Charge counters only fall while a device discharges, and `cmd battery unplug` merely changes
