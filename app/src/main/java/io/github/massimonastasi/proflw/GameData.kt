@@ -136,6 +136,16 @@ object GameData {
         val projectile: Int = -1,
     ) {
         var spriteIndex = -1
+
+        /**
+         * Position in [creatures], or -1 for the marine, who is not in the bestiary.
+         *
+         * Statistics are kept per creature and this is what indexes them. Assigned in the
+         * same init block as [spriteIndex] rather than searched for, so recording a kill
+         * costs an array write instead of a scan of fourteen — this runs inside the tick
+         * loop, thirty-five times a second.
+         */
+        var index = -1
     }
 
     /**
@@ -459,6 +469,9 @@ object GameData {
         val weight: Int = 1,
     ) {
         var spriteIndex = -1
+
+        /** Position in [items], for the same reason [Creature.index] exists. */
+        var index = -1
     }
 
     /**
@@ -690,5 +703,7 @@ object GameData {
         player.spriteIndex = spritePrefixes.indexOf(player.lumpPrefix)
         for (p in projectiles) p.spriteIndex = spritePrefixes.indexOf(p.lumpPrefix)
         for (i in items) i.spriteIndex = spritePrefixes.indexOf(i.lumpPrefix)
+        creatures.forEachIndexed { n, c -> c.index = n }
+        items.forEachIndexed { n, i -> i.index = n }
     }
 }

@@ -92,6 +92,16 @@ class Actor(val spriteIndex: Int) {
     var damage = 0
     var firedByPlayer = false
 
+    /**
+     * Projectiles only: who fired, so a death can name the creature that caused it.
+     *
+     * The creature rather than the shooter's [Actor], because a missile outlives its
+     * shooter often enough — by the time it lands the shooter may be a corpse, or already
+     * removed from the scene. [GameData.Creature] instances are singletons, so this holds
+     * nothing alive that was not going to live anyway. Null when the marine fired it.
+     */
+    var firedBy: GameData.Creature? = null
+
     var targetX = 0
     var targetY = 0
     var dead = false
@@ -344,6 +354,29 @@ class Scene(
 
     /** Tables finished at the hardest skill since this scene was built. */
     var completions = 0
+        private set
+
+    /**
+     * Tallies since this scene was built, indexed by [GameData.Creature.index] and
+     * [GameData.Item.index]. The engine drains them into the preferences; the scene itself
+     * never persists anything, having no Context and wanting none.
+     *
+     * ponytail: plain arrays, exposed as they are and read-only by convention. A defensive
+     * copy every frame would allocate for nothing — the only readers are the engine that
+     * owns this scene and the tests.
+     */
+    val kills = IntArray(GameData.creatures.size)
+    val deaths = IntArray(GameData.creatures.size)
+    val pickups = IntArray(GameData.items.size)
+
+    /**
+     * Bumped whenever any tally above changes, and never otherwise.
+     *
+     * This is what keeps statistics off the battery budget. The engine compares this one
+     * integer per frame and only walks the arrays when it has moved, so an ordinary frame —
+     * which is nearly all of them — costs a single comparison rather than thirty-seven.
+     */
+    var statsVersion = 0
         private set
 
     /** Whether the table now being finished was the one on the hardest rung. */
@@ -839,7 +872,14 @@ class Scene(
     private fun updateItem(a: Actor): Boolean {
         val p = player ?: return true
         if (!p.dead && approxDistance(a, p) < (p.radius + 24) * FRACUNIT) {
-            if (pickUp(p, a.item ?: return false)) return false
+            val item = a.item ?: return false
+            if (pickUp(p, item)) {
+                // Counted here rather than inside pickUp, which the tests call directly and
+                // which also runs for items the marine refuses. A true return is the only
+                // thing that means "he took it".
+                if (!cheated && item.index >= 0) { pickups[item.index]++; statsVersion++ }
+                return false
+            }
         }
         return tic - a.spawnTic < ITEM_LIFETIME
     }
@@ -853,6 +893,13 @@ class Scene(
      */
     /** Test hook: pickUp is the rule set worth pinning, and it is otherwise unreachable. */
     internal fun pickUpForTest(p: Actor, item: GameData.Item) = pickUp(p, item)
+
+    /**
+     * Test hook, for the same reason as [pickUpForTest]: who gets the credit for a death is
+     * decided inside [damageActor], and there is no other way in.
+     */
+    internal fun damageForTest(target: Actor, amount: Int, by: GameData.Creature?) =
+        damageActor(target, amount, by)
 
     private fun pickUp(p: Actor, it: GameData.Item): Boolean {
         val kit = p.loadout ?: return false
@@ -1030,7 +1077,7 @@ class Scene(
 
         // Melee when the target is in reach: P_CheckMeleeRange uses MELEERANGE.
         if (c.melee && approxDistance(a, target) < MELEERANGE + target.radius * FRACUNIT) {
-            damageActor(target, c.damage)
+            damageActor(target, c.damage, c)
             return
         }
         // The marine fires whatever he is holding, which may be hitscan or a missile; a
@@ -1049,14 +1096,14 @@ class Scene(
                 spawnMissile(a, target, GameData.projectiles[w.projectile], w.damage)
             } else {
                 // Fixed damage per trigger pull, no roll; see GameData.weapons.
-                damageActor(target, w.damage)
+                damageActor(target, w.damage, GameData.player)
             }
             return
         }
 
         if (c.hitscan) {
             // Instant shot: no projectile to simulate, damage applied directly.
-            damageActor(target, c.damage)
+            damageActor(target, c.damage, c)
             return
         }
         if (c.projectile >= 0) {
@@ -1078,6 +1125,7 @@ class Scene(
         m.spawnTic = tic
         m.damage = damage
         m.firedByPlayer = from.isPlayer
+        m.firedBy = from.creature
 
         val dx = target.x - from.x
         val dy = target.y - from.y
@@ -1108,14 +1156,18 @@ class Scene(
             if (o.creature == null || o.dead) continue
             if (o.isPlayer == a.firedByPlayer) continue          // no friendly fire
             if (approxDistance(a, o) < o.radius * FRACUNIT) {
-                damageActor(o, a.damage)
+                damageActor(o, a.damage, if (a.firedByPlayer) GameData.player else a.firedBy)
                 return false
             }
         }
         return true
     }
 
-    private fun damageActor(target: Actor, amount: Int) {
+    /**
+     * @param by the creature that caused this, or [GameData.player] when the marine did,
+     *   or null when nobody can be named. Only the statistics read it.
+     */
+    private fun damageActor(target: Actor, amount: Int, by: GameData.Creature? = null) {
         if (target.dead) return
         if (target.isPlayer && invulnerable) return
         val c = target.creature ?: return
@@ -1141,6 +1193,19 @@ class Scene(
         if (target.health <= 0) {
             target.dead = true
             if (!target.isPlayer) demonCount--
+            // Not counted under god mode, for the same reason completions are not: a run
+            // that cannot be lost is not a record of anything.
+            if (!cheated) {
+                if (target.isPlayer) {
+                    // by is null when nothing can be named — a projectile whose shooter was
+                    // never recorded. Better an uncounted death than a wrong one.
+                    val killer = by?.index ?: -1
+                    if (killer >= 0) { deaths[killer]++; statsVersion++ }
+                } else if (by === GameData.player && c.index >= 0) {
+                    kills[c.index]++
+                    statsVersion++
+                }
+            }
             begin(target, Mode.DEATH, c.death)
             target.spawnTic = tic
             return
