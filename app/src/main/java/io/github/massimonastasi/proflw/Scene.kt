@@ -379,6 +379,21 @@ class Scene(
     var statsVersion = 0
         private set
 
+    /**
+     * Zeroes the tallies, for the engine to call once it has written them down.
+     *
+     * What the arrays hold is therefore "since the last flush", not "since this scene was
+     * built" — which is what makes them deltas the engine can add to a running total without
+     * having to remember what it saw last time. [statsVersion] is deliberately not reset:
+     * it is a change detector, not a count, and rewinding it would make the next real change
+     * look like nothing had happened.
+     */
+    fun clearStats() {
+        kills.fill(0)
+        deaths.fill(0)
+        pickups.fill(0)
+    }
+
     /** Whether the table now being finished was the one on the hardest rung. */
     private var clearedHardest = false
 

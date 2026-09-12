@@ -362,6 +362,16 @@ class ProfWallpaperService : WallpaperService() {
         /** Completions already written to the preferences, so each one is counted once. */
         private var seenCompletions = 0
 
+        /**
+         * The scene's [Scene.statsVersion] as of the last flush.
+         *
+         * One integer compared per frame. The arrays are only walked when this has moved,
+         * which on an ordinary frame it has not — statistics must not show up in the battery
+         * measurement, and thirty-seven comparisons a frame at twenty frames a second would
+         * be a poor way to keep that promise.
+         */
+        private var seenStats = 0
+
         /** Where the finger went down, and when a tap was last acted on, from either source. */
         private var downX = 0f
         private var downY = 0f
@@ -548,6 +558,7 @@ class ProfWallpaperService : WallpaperService() {
             // written has to start there too. Left behind, the two disagreed from the first
             // tic and every rotation re-armed a completion that had not happened.
             seenCompletions = 0
+            seenStats = 0
             scene = Scene(
                 worldWidth = (width / pxPerUnit).toInt(),
                 worldHeight = (height / pxPerUnit).toInt(),
@@ -725,6 +736,27 @@ class ProfWallpaperService : WallpaperService() {
                 seenCompletions = s.completions
                 Settings.addCompletion(prefs)
             }
+            flushStats(s)
+        }
+
+        /**
+         * Drains the scene's tallies into the preferences, and only when there is something
+         * to drain.
+         *
+         * The guard is the whole point: an ordinary frame costs one comparison of two
+         * integers and nothing else. A kill or a pickup is rare on the scale of frames, so
+         * the arrays are walked a handful of times a minute rather than twenty times a
+         * second.
+         *
+         * The copies are deltas, not totals — the scene counts from its own construction and
+         * is rebuilt on every rotation, so what is flushed is the difference since last time
+         * and the scene's own numbers are left alone.
+         */
+        private fun flushStats(s: Scene) {
+            if (s.statsVersion == seenStats) return
+            seenStats = s.statsVersion
+            Settings.addStats(prefs, s.kills, s.deaths, s.pickups)
+            s.clearStats()
         }
 
         private fun drawActor(canvas: Canvas, a: Actor) {

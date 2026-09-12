@@ -132,6 +132,43 @@ object Settings {
     }
 
     /**
+     * Statistics, one integer per creature or item.
+     *
+     * Keyed by the WAD lump prefix — `kill_POSS`, `death_SARG`, `pick_MEDI` — and not by
+     * position in [GameData.creatures]. That list is ordered by escalating health and the
+     * ordering is load-bearing elsewhere, so inserting a creature one day would renumber
+     * every statistic already on the phone. A lump name comes from the WAD and never moves.
+     *
+     * The factory reset clears the whole preferences file, so these go with it. That is the
+     * right behaviour: a reset that left the kill count standing would be a half reset.
+     */
+    private fun killKey(c: GameData.Creature) = "kill_${c.lumpPrefix}"
+    private fun deathKey(c: GameData.Creature) = "death_${c.lumpPrefix}"
+    private fun pickKey(i: GameData.Item) = "pick_${i.lumpPrefix}"
+
+    fun kills(p: SharedPreferences, c: GameData.Creature): Int = p.getInt(killKey(c), 0)
+    fun deaths(p: SharedPreferences, c: GameData.Creature): Int = p.getInt(deathKey(c), 0)
+    fun pickups(p: SharedPreferences, i: GameData.Item): Int = p.getInt(pickKey(i), 0)
+
+    /**
+     * Adds one scene's worth of tallies to what is already stored.
+     *
+     * Takes the deltas, not the totals: the scene is rebuilt on every rotation and counts
+     * only from its own construction, so the engine hands over what has happened since it
+     * last called this. One edit for the lot, applied asynchronously.
+     */
+    fun addStats(p: SharedPreferences, kills: IntArray, deaths: IntArray, pickups: IntArray) =
+        p.edit {
+            GameData.creatures.forEachIndexed { n, c ->
+                if (kills[n] != 0) putInt(killKey(c), kills(p, c) + kills[n])
+                if (deaths[n] != 0) putInt(deathKey(c), deaths(p, c) + deaths[n])
+            }
+            GameData.items.forEachIndexed { n, i ->
+                if (pickups[n] != 0) putInt(pickKey(i), pickups(p, i) + pickups[n])
+            }
+        }
+
+    /**
      * The sequence that puts the debug row on the settings screen: the readout row four
      * times, god mode twice, then 10 fps and 20 fps.
      *
