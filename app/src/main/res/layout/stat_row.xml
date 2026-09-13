@@ -29,10 +29,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:minHeight="@dimen/stat_row_height"
-        android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp">
+        android:minHeight="@dimen/list_row_content"
+        android:orientation="horizontal">
 
         <!--
             The creature or the pickup, as it appears in whichever WAD is active - so importing
@@ -51,19 +49,23 @@
             tools:src="@drawable/ic_completed" />
 
         <!--
-            Shown when there is no portrait to show: a WAD that lacks a creature entirely, or a
-            lump that would not decode. A row with a blank where the picture should be says
-            nothing; a row with a name still says which creature it counts.
+            The name of the creature or the pickup, beside its portrait. The library's list-item
+            styles rather than a typeface chosen here, so these rows read as the same rows as
+            the ones on the other two tabs - which is all a statistics page has to be.
         -->
         <TextView
             android:id="@+id/stat_label"
+            style="@style/Widget.Material3.TextView.ListItem.LabelText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textAppearance="?attr/textAppearanceBodyLarge"
-            android:textColor="?attr/colorOnSurface"
             tools:text="Zombie" />
 
+        <!--
+            The count, at the size of a list item's own text rather than of its trailing
+            supporting text. The M3 trailing slot is 11sp, meant for a timestamp or a unit
+            beside something more important - and on this page the number is the page.
+        -->
         <TextView
             android:id="@+id/stat_count"
             android:layout_width="wrap_content"

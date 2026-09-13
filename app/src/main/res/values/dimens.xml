@@ -19,5 +19,16 @@
         gallery that has to be scrolled past to reach the numbers.
     -->
     <dimen name="stat_sprite_size">40dp</dimen>
-    <dimen name="stat_row_height">64dp</dimen>
+    <!--
+        The content of a list row, inside the padding the ListItemCardView adds of its own.
+        One number for all three tabs: a statistics row that is taller than a settings row is
+        noise, and the sprite fits inside this without lifting it.
+    -->
+    <dimen name="list_row_content">44dp</dimen>
+    <!--
+        The slot a row's leading element sits in, so the labels line up down the page whether
+        the row starts with a radio button or with a sprite. A row that starts with neither
+        begins at the card's own padding, which is what Material 3 draws.
+    -->
+    <dimen name="list_row_leading">40dp</dimen>
 </resources>

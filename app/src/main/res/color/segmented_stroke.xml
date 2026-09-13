@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The outline of a segmented button, gone on the selected one.
+
+    Written out because the library's m3_button_outline_color_selector has no entry for
+    state_checked: a selected segment kept a full-strength colorOutline line around its own
+    fill, which is a border drawn between a shape and itself. The unselected segments keep
+    theirs - that outline is the only thing giving them an edge.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:alpha="0.12" android:color="?attr/colorOnSurface" android:state_enabled="false" />
+    <item android:color="@android:color/transparent" android:state_checked="true" />
+    <item android:color="?attr/colorOutline" />
+</selector>

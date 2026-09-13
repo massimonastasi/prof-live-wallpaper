@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The fill of a segmented button: the selected one sits on the secondary container, the
+    others on nothing at all, which is what Material 3 asks of a segmented control.
+
+    Written out rather than inherited. An outlined button on its own has no selected state to
+    colour - it is the toggle group that gives it one, and the library leaves that colour to
+    whoever built the group. Without this the chosen frame rate was told apart by the ripple
+    that had just faded.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="?attr/colorSecondaryContainer" android:state_checked="true" />
+    <item android:color="@android:color/transparent" />
+</selector>

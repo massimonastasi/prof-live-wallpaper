@@ -46,22 +46,29 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:minHeight="44dp"
+        android:minHeight="@dimen/list_row_content"
         android:orientation="horizontal">
 
+        <!--
+            minWidth against the 48dp the RadioButton style inherits from minTouchTargetSize.
+            Nothing taps this: the style itself sets clickable and focusable false and the card
+            behind it takes the touch, so the target buys nothing and only pushes the label
+            eight dp further right than the same label on a statistics row.
+        -->
         <com.google.android.material.radiobutton.MaterialRadioButton
             android:id="@+id/row_radio"
             style="@style/Widget.Material3.RadioButton.ListItem"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
+            android:minWidth="@dimen/list_row_leading"
             android:duplicateParentState="true"
             android:saveEnabled="false" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="12dp"
+            android:layout_marginEnd="16dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -100,7 +107,8 @@
             android:layout_height="wrap_content"
             android:duplicateParentState="true"
             android:saveEnabled="false"
-            android:visibility="gone" />
+            android:visibility="gone"
+            app:trackTint="@color/switch_track" />
 
         <!--
             A row that only points somewhere: the library's own trailing icon. An ImageView

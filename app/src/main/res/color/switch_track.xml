@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The track of a switch in a list row.
+
+    Widget.Material3.Switch.ListItem overrides the track to colorSecondary but leaves the
+    handle on colorOnPrimary, which is the role meant to sit on a colorPrimary track. This
+    puts the track back on colorPrimary so the pair is the one Material 3 draws, and so an
+    on switch reads as the same "on" as the filled button at the foot of the page.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:alpha="0.12" android:color="?attr/colorOnSurface" android:state_enabled="false" />
+    <item android:color="?attr/colorPrimary" android:state_checked="true" />
+    <item android:color="?attr/colorSurfaceContainerHighest" />
+</selector>
