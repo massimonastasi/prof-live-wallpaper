@@ -115,12 +115,15 @@ class SceneTest {
         }
         assertTrue(reached > 0, "the skill never rose in an hour of invulnerable play")
 
-        // Now let him be killed: the waves go back to the first, the rung does not.
+        // Now let him be killed. The run ends, and a run is what the ladder measures: the
+        // waves go back to the first and the rung goes with them - see the comment on the
+        // reset in Scene, which says why it is not kept. This used to assert the opposite and
+        // passed only on timing: it read the skill in the window between the last wave ending
+        // and the reset, and any change to the tic budget moved that window.
         scene.invulnerable = false
-        val hardened = scene.skill
         while (t < TICRATE * 5400 && scene.wave > 0) scene.tick(++t)
         assertEquals(0, scene.wave, "he was never killed: this half of the test checked nothing")
-        assertEquals(hardened, scene.skill, "death took the rung, and the background, back down")
+        assertTrue(scene.skill <= reached, "a death cannot hand out a rung")
     }
 
     /**
@@ -690,11 +693,16 @@ class SceneTest {
             for (a in scene.actors) {
                 val raised = a.drawHeight != 0
                 if (raised) sawRaised = true
+                // A missile's blast is at the height the missile was flying at, and carries
+                // the missile's own sprite, which is how it is told from anything else.
+                val blast = a.mode == Mode.EFFECT &&
+                    GameData.projectiles.any { it.spriteIndex == a.spriteIndex }
                 when {
-                    a.mode == Mode.PROJECTILE || a.spriteIndex == GameData.bloodSpriteIndex ->
+                    a.mode == Mode.PROJECTILE || blast ||
+                        a.spriteIndex == GameData.bloodSpriteIndex ->
                         assertEquals(
                             Scene.MUZZLE_HEIGHT, a.drawHeight,
-                            "a shot or its blood is not at chest height at tic $t",
+                            "a shot, its blast or its blood is not at chest height at tic $t",
                         )
                     // Creatures, corpses, pickups and the teleport fog all stand on the floor.
                     else -> assertEquals(
@@ -705,5 +713,48 @@ class SceneTest {
             }
         }
         assertTrue(sawRaised, "nothing was ever drawn above the floor in ten minutes")
+    }
+
+    /**
+     * The blast a rocket leaves where it landed, which is the whole of what an impact looks
+     * like: MISL frames B,C,D, spawned on the hit and gone once they have run.
+     */
+    @Test
+    fun `a missile that hits leaves an explosion behind it`() {
+        GameData.clearRandom()
+        val scene = Scene(720, 1600)
+        val rocket = GameData.projectiles[GameData.PROJECTILE_ROCKET]
+        val zombie = GameData.creatures[0]
+
+        val shooter = Actor(GameData.player.spriteIndex).apply {
+            creature = GameData.player
+            isPlayer = true
+            health = GameData.player.health
+            x = 100 * GameData.FRACUNIT
+            y = 100 * GameData.FRACUNIT
+        }
+        val target = Actor(zombie.spriteIndex).apply {
+            creature = zombie
+            health = zombie.health
+            x = 140 * GameData.FRACUNIT
+            y = 100 * GameData.FRACUNIT
+        }
+        scene.actors.add(shooter)
+        scene.actors.add(target)
+        scene.missileForTest(shooter, target, rocket)
+
+        var t = 0
+        while (t < 60 && scene.actors.none { it.mode == Mode.EFFECT }) scene.tick(++t)
+
+        val blast = scene.actors.firstOrNull { it.mode == Mode.EFFECT && it.anim === rocket.burst }
+        assertTrue(blast != null, "the rocket must leave its blast where it landed")
+        assertTrue(scene.actors.none { it.mode == Mode.PROJECTILE }, "and stop being a rocket")
+
+        // Its own tics, and then it is gone: an effect that outlived its animation would
+        // stay on the field forever.
+        val lifetime = rocket.burst!!.tics.sum()
+        repeat(lifetime + 1) { scene.tick(++t) }
+        assertTrue(scene.actors.none { it.mode == Mode.EFFECT && it.anim === rocket.burst },
+            "the blast must clear itself once it has run")
     }
 }

@@ -148,16 +148,52 @@ object GameData {
         var index = -1
     }
 
+    /** Fireball in flight: 2 frames of 4 tics looping (S_TBALL1/2, S_BRBALL1/2). */
+    val ballAnim = Anim(intArrayOf(0, 1), intArrayOf(4, 4))
+
+    /**
+     * The rocket in flight: one frame, S_ROCKET, sprite MISL frame A.
+     *
+     * Unlike every other missile here, MISL's second and third frames are not more flight -
+     * they are S_EXPLODE1..3, the blast. Looping the fireball's two frames over it made the
+     * rocket flicker into its own explosion for half of every travelling tic.
+     */
+    val rocketAnim = Anim(intArrayOf(0), intArrayOf(4))
+
+    /**
+     * The blast a missile leaves where it landed: states S_EXPLODE1..3, sprite MISL frames
+     * B,C,D at 8, 6 and 4 tics - the frames the flight loop above had to stop borrowing.
+     */
+    val rocketBurst = Anim(intArrayOf(1, 2, 3), intArrayOf(8, 6, 4))
+
+    /**
+     * A fireball going out: S_TBALLX1..3 and S_BRBALLX1..3, frames C,D,E at 6 tics each.
+     * Both sequences are the same shape, and both live in the fireball's own sprite.
+     */
+    val ballBurst = Anim(intArrayOf(2, 3, 4), intArrayOf(6, 6, 6))
+
     /**
      * info.c: the missiles. Their `speed` is already in FRACUNIT, unlike the monsters'.
      *
      * A missile carries no damage of its own: whoever fired it says what it deals, the same
      * figure that shooter would have dealt by hand. mobjinfo's `damage` was a multiplicand for
      * a roll that no longer happens, so it is gone with the roll.
+     *
+     * [anim] is the flight loop, the fireball's two frames unless a missile says otherwise.
+     *
+     * [burst] is what is drawn where it lands, and is null for four of the seven. In the
+     * engine those four explode into sprites of their own - PLSE for the plasma, APBX for the
+     * arachnotron's, FBXP for the tracer - and a missile whose blast is not in its own sprite
+     * would have to add a prefix to spritePrefixes, to the reducer's keep-list in
+     * build.gradle.kts, and to the count WadStore checks on import.
+     * ponytail: the four fade out as they always did; add the prefixes if the plasma's blast
+     * turns out to be missed.
      */
     class Projectile(
         val lumpPrefix: String,
         val speed: Int,
+        val anim: Anim = ballAnim,
+        val burst: Anim? = null,
     ) {
         var spriteIndex = -1
     }
@@ -165,10 +201,10 @@ object GameData {
     // info.c mobjinfo[]: MT_TROOPSHOT and MT_BRUISERSHOT are the monsters' fireballs,
     // MT_PLASMA and MT_ROCKET the marine's. Speeds verbatim from the table.
     val projectiles = listOf(
-        Projectile("BAL1", speed = 10),      // MT_TROOPSHOT
-        Projectile("BAL7", speed = 15),      // MT_BRUISERSHOT
-        Projectile("PLSS", speed = 25),      // MT_PLASMA
-        Projectile("MISL", speed = 20),      // MT_ROCKET
+        Projectile("BAL1", speed = 10, burst = ballBurst),  // MT_TROOPSHOT
+        Projectile("BAL7", speed = 15, burst = ballBurst),  // MT_BRUISERSHOT
+        Projectile("PLSS", speed = 25),      // MT_PLASMA, which explodes into PLSE
+        Projectile("MISL", speed = 20, anim = rocketAnim, burst = rocketBurst), // MT_ROCKET
         Projectile("FATB", speed = 10),      // MT_TRACER, without the homing
         Projectile("MANF", speed = 20),      // MT_FATSHOT
         Projectile("APLS", speed = 25),      // MT_ARACHPLAZ
@@ -185,9 +221,6 @@ object GameData {
 
     /** Teleport fog: states S_TFOG*, 6 tics per frame. */
     val fogAnim = Anim(IntArray(10) { it }, IntArray(10) { 6 })
-
-    /** Fireball in flight: 2 frames of 4 tics looping (S_TBALL1/2, S_BRBALL1/2). */
-    val ballAnim = Anim(intArrayOf(0, 1), intArrayOf(4, 4))
 
     /**
      * The bestiary, ordered by escalation.
@@ -217,7 +250,7 @@ object GameData {
         ),
         // mobjinfo[MT_SHOTGUY]; A_SPosAttack fires 3 shots
         Creature(
-            "ShotgunZombie", "SPOS", speed = 8, health = 2, radius = 20, walkFrames = 4, walkTics = 3,
+            "Shotgun Zombie", "SPOS", speed = 8, health = 2, radius = 20, walkFrames = 4, walkTics = 3,
             attack = Anim(intArrayOf(4, 5, 4), intArrayOf(10, 10, 10)),
             pain = Anim(intArrayOf(6, 6), intArrayOf(3, 3)),
             death = Anim(intArrayOf(7, 8, 9, 10, 11), intArrayOf(5, 5, 5, 5, -1)),
@@ -234,7 +267,7 @@ object GameData {
         // mobjinfo[MT_CHAINGUY]; A_CPosAttack, a hitscan burst.
         // Phase 2 and later: absent from Phase 1 and from Freedoom Phase 1.
         Creature(
-            "ChaingunZombie", "CPOS", speed = 8, health = 4, radius = 20, walkFrames = 4, walkTics = 3,
+            "Chaingun Zombie", "CPOS", speed = 8, health = 4, radius = 20, walkFrames = 4, walkTics = 3,
             attack = Anim(intArrayOf(4, 5, 4), intArrayOf(10, 4, 4)),
             pain = Anim(intArrayOf(6, 6), intArrayOf(3, 3)),
             death = Anim(intArrayOf(7, 8, 9, 10, 11, 12, 13), intArrayOf(5, 5, 5, 5, 5, 5, -1)),
@@ -261,7 +294,7 @@ object GameData {
         ),
         // mobjinfo[MT_SERGEANT] speed 10; A_SargAttack: melee only
         Creature(
-            "FleshWorm", "SARG", speed = 10, health = 8, radius = 30, walkFrames = 4, walkTics = 2,
+            "Flesh Worm", "SARG", speed = 10, health = 8, radius = 30, walkFrames = 4, walkTics = 2,
             attack = Anim(intArrayOf(4, 5, 6), intArrayOf(8, 8, 8)),
             pain = Anim(intArrayOf(7, 7), intArrayOf(2, 2)),
             death = Anim(intArrayOf(8, 9, 10, 11, 12, 13), intArrayOf(8, 8, 4, 4, 4, -1)),
@@ -271,7 +304,7 @@ object GameData {
         // MT_TRACER. The tracer's homing is not reproduced: it flies straight here.
         // Phase 2 and later.
         Creature(
-            "BoneStalker", "SKEL", speed = 10, health = 10, radius = 20, walkFrames = 6, walkTics = 2,
+            "Bone Stalker", "SKEL", speed = 10, health = 10, radius = 20, walkFrames = 6, walkTics = 2,
             attack = Anim(intArrayOf(6, 7, 8), intArrayOf(6, 6, 6)),
             pain = Anim(intArrayOf(10, 10), intArrayOf(5, 5)),
             death = Anim(intArrayOf(11, 12, 13, 14, 15, 16), intArrayOf(7, 7, 7, 7, 7, -1)),
@@ -290,7 +323,7 @@ object GameData {
         // mobjinfo[MT_KNIGHT]; the same attack as MT_BRUISER at half the health.
         // Phase 2 and later.
         Creature(
-            "LesserLord", "BOS2", speed = 8, health = 20, radius = 24, walkFrames = 4, walkTics = 3,
+            "Lesser Lord", "BOS2", speed = 8, health = 20, radius = 24, walkFrames = 4, walkTics = 3,
             attack = Anim(intArrayOf(4, 5, 6), intArrayOf(8, 8, 8)),
             pain = Anim(intArrayOf(7, 7), intArrayOf(2, 2)),
             death = Anim(intArrayOf(8, 9, 10, 11, 12, 13, 14), intArrayOf(8, 8, 8, 8, 8, 8, -1)),
@@ -315,7 +348,7 @@ object GameData {
         ),
         // mobjinfo[MT_BRUISER]; A_BruisAttack: melee, otherwise MT_BRUISERSHOT
         Creature(
-            "PainLord", "BOSS", speed = 8, health = 45, radius = 24, walkFrames = 4, walkTics = 3,
+            "Pain Lord", "BOSS", speed = 8, health = 45, radius = 24, walkFrames = 4, walkTics = 3,
             attack = Anim(intArrayOf(4, 5, 6), intArrayOf(8, 8, 8)),
             pain = Anim(intArrayOf(7, 7), intArrayOf(2, 2)),
             death = Anim(intArrayOf(8, 9, 10, 11, 12, 13, 14), intArrayOf(8, 8, 8, 8, 8, 8, -1)),
@@ -439,9 +472,9 @@ object GameData {
         Weapon("Pistol", "PIST", -1, Anim(intArrayOf(4, 5, 4), intArrayOf(6, 8, 6)), damage = 1),
         Weapon("Shotgun", "SHOT", AMMO_SHELLS, Anim(intArrayOf(4, 5, 4), intArrayOf(6, 10, 8)), damage = 7),
         Weapon("Chaingun", "MGUN", AMMO_BULLETS, Anim(intArrayOf(4, 5), intArrayOf(3, 3)), damage = 1),
-        Weapon("SuperShotgun", "SGN2", AMMO_SHELLS, Anim(intArrayOf(4, 5, 4), intArrayOf(6, 12, 10)), damage = 20),
-        Weapon("PlasmaRifle", "PLAS", AMMO_CELLS, Anim(intArrayOf(4, 5), intArrayOf(3, 3)), damage = 2, projectile = PROJECTILE_PLASMA),
-        Weapon("RocketLauncher", "LAUN", AMMO_ROCKETS, Anim(intArrayOf(4, 5, 4), intArrayOf(8, 12, 10)), damage = 10, projectile = PROJECTILE_ROCKET),
+        Weapon("Super Shotgun", "SGN2", AMMO_SHELLS, Anim(intArrayOf(4, 5, 4), intArrayOf(6, 12, 10)), damage = 20),
+        Weapon("Plasma Rifle", "PLAS", AMMO_CELLS, Anim(intArrayOf(4, 5), intArrayOf(3, 3)), damage = 2, projectile = PROJECTILE_PLASMA),
+        Weapon("Rocket Launcher", "LAUN", AMMO_ROCKETS, Anim(intArrayOf(4, 5, 4), intArrayOf(8, 12, 10)), damage = 10, projectile = PROJECTILE_ROCKET),
     )
 
     const val WEAPON_PISTOL = 0

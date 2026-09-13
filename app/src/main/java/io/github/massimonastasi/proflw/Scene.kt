@@ -122,6 +122,14 @@ class Actor(val spriteIndex: Int) {
      */
     var drawHeight = 0
 
+    /**
+     * What this missile leaves behind where it lands, or null if its blast lives in a sprite
+     * this application does not load. Carried on the actor rather than looked up from the
+     * projectile table on impact: the table is searched by sprite index, and this runs inside
+     * the tic loop.
+     */
+    var burst: GameData.Anim? = null
+
     /** Tics of stillness after appearing: info.c mobjinfo.reactiontime. */
     var reactionTime = 0
 
@@ -916,6 +924,13 @@ class Scene(
     internal fun damageForTest(target: Actor, amount: Int, by: GameData.Creature?) =
         damageActor(target, amount, by)
 
+    /**
+     * Test hook: a missile in flight, so the blast it leaves on impact can be pinned. Firing
+     * one for real needs a creature that owns a projectile, in range, off cooldown.
+     */
+    internal fun missileForTest(from: Actor, target: Actor, p: GameData.Projectile) =
+        spawnMissile(from, target, p, damage = 1)
+
     private fun pickUp(p: Actor, it: GameData.Item): Boolean {
         val kit = p.loadout ?: return false
         return when (it.kind) {
@@ -1130,8 +1145,9 @@ class Scene(
     private fun spawnMissile(from: Actor, target: Actor, p: GameData.Projectile, damage: Int) {
         val m = Actor(p.spriteIndex)
         m.mode = Mode.PROJECTILE
-        m.anim = GameData.ballAnim
-        m.animTics = GameData.ballAnim.tics[0]
+        m.anim = p.anim
+        m.animTics = p.anim.tics[0]
+        m.burst = p.burst
         m.x = from.x
         m.y = from.y
         // Leaves the chest and stays there for the whole flight: the height is drawn, not
@@ -1155,10 +1171,11 @@ class Scene(
 
     /** false once the projectile is done (off the field or exploded). */
     private fun moveProjectile(a: Actor): Boolean {
-        if (a.anim != null && !advanceAnim(a)) {
-            // The two fireball images are a loop, not a sequence.
+        val anim = a.anim
+        if (anim != null && !advanceAnim(a)) {
+            // A missile's flight images are a loop, not a sequence.
             a.animStep = 0
-            a.animTics = GameData.ballAnim.tics[0]
+            a.animTics = anim.tics[0]
         }
         a.x += a.momX
         a.y += a.momY
@@ -1172,6 +1189,9 @@ class Scene(
             if (o.isPlayer == a.firedByPlayer) continue          // no friendly fire
             if (approxDistance(a, o) < o.radius * FRACUNIT) {
                 damageActor(o, a.damage, if (a.firedByPlayer) GameData.player else a.firedBy)
+                // The blast, at the height the missile was flying at. Only here: leaving the
+                // field or timing out is not hitting anything, and neither explodes.
+                a.burst?.let { spawnEffect(a.spriteIndex, it, a.x, a.y, MUZZLE_HEIGHT) }
                 return false
             }
         }
