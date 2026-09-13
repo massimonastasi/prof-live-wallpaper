@@ -32,8 +32,15 @@ import android.content.SharedPreferences
 object Statistics {
 
     /**
-     * Pairs each thing with its tally, drops the ones that never happened, and puts the
-     * commonest first.
+     * Pairs each thing with its tally and drops the ones that never happened, keeping the
+     * order of the table it came from.
+     *
+     * That order is the answer to "in what order", and it is already written down elsewhere:
+     * [GameData.creatures] climbs from the Zombie to the Overlord, so the rows run from the
+     * weakest thing on the field to the strongest and the two bosses fall to the bottom on
+     * their own; [GameData.items] runs healing, then armour, then the guns, each group from
+     * the plain one to the powerful one. Sorting by tally instead put a boss between two
+     * zombies and a rocket launcher between two stimpacks, which is a ranking of luck.
      *
      * Dropping zeros is what keeps the page honest early on: fourteen creatures and nine
      * pickups would otherwise be a wall of noughts on a phone that has had the wallpaper for
@@ -42,7 +49,6 @@ object Statistics {
     internal fun <T> rank(things: List<T>, counts: IntArray): List<Pair<T, Int>> =
         things.mapIndexed { i, t -> t to counts[i] }
             .filter { it.second > 0 }
-            .sortedByDescending { it.second }
 
     private fun read(size: Int, at: (Int) -> Int) = IntArray(size) { at(it) }
 

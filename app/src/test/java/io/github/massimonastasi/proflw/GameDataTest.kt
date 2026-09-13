@@ -71,9 +71,9 @@ class GameDataTest {
         fun speedOf(name: String) = GameData.creatures.first { it.name == name }.speed
         assertEquals(8, speedOf("Zombie"))
         assertEquals(8, speedOf("Serpentipede"))
-        // The FleshWorm (SARG) is the only faster one: speed 10.
-        assertEquals(10, speedOf("FleshWorm"))
-        assertEquals(8, speedOf("PainLord"))
+        // The Flesh Worm (SARG) is the only faster one: speed 10.
+        assertEquals(10, speedOf("Flesh Worm"))
+        assertEquals(8, speedOf("Pain Lord"))
     }
 
     @Test

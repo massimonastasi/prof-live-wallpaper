@@ -138,4 +138,19 @@ class StatisticsTest {
             if (n > 0) assertTrue(i in GameData.creatures.indices, "death index $i is not a creature")
         }
     }
+
+    /**
+     * The order of the rows, which is the table's and not the tally's: the bestiary climbs
+     * from the weakest creature to the strongest, and a page sorted by count would put a boss
+     * killed twice above a zombie killed two hundred times.
+     */
+    @Test
+    fun `rank keeps the table order and drops the zeros`() {
+        val things = listOf("weakest", "middling", "never met", "strongest")
+        val ranked = Statistics.rank(things, intArrayOf(200, 5, 0, 2))
+
+        assertEquals(listOf("weakest", "middling", "strongest"), ranked.map { it.first },
+            "the table's own order decides, not the counts")
+        assertEquals(listOf(200, 5, 2), ranked.map { it.second }, "each keeps its own tally")
+    }
 }

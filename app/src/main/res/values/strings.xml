@@ -22,7 +22,13 @@
     <string name="settings_reset_done">Everything is back to how it started.</string>
     <string name="photo_imported">Photo loaded.</string>
     <string name="settings_wad">Use your own WAD</string>
-    <string name="settings_wad_note">Point this at an IWAD you already own - the .wad file that came with the game - and its sprites, palette, floors and numerals replace the bundled ones. The file is copied into this app and never leaves your device.</string>
+    <!--
+        The last sentence answers a question the screen invites: the portraits change with the
+        file, so the names look like they should follow. They cannot - a WAD carries artwork,
+        not words, and the names here are this app\'s own. Saying so is cheaper than a user
+        deciding the statistics are broken.
+    -->
+    <string name="settings_wad_note">Point this at an IWAD you already own - the .wad file that came with the game - and its sprites, palette, floors and numerals replace the bundled ones. The file is copied into this app and never leaves your device. The names in Statistics are this app\'s own and do not change with the file, and your counts are kept.</string>
     <string name="wad_imported">WAD loaded. The wallpaper will use it the next time it is shown.</string>
     <string name="wad_unreadable">That file could not be read.</string>
     <string name="wad_not_a_wad">That file is not a WAD. Choose the .wad file from a game you already own.</string>
