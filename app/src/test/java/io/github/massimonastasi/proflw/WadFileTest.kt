@@ -96,6 +96,22 @@ class WadFileTest {
         // Only what this WAD carries: a creature it has never heard of is substituted away
         // at runtime, and demanding its frames here would just be asking a Phase 1 file for
         // Phase 2 art.
+        // The missiles, which the loop below would never reach: they are not creatures, and
+        // nothing else asked the shipped WAD whether it can draw one. A projectile always
+        // asks for rotation 1 - it never sets facing, and spriteRotation answers 1 for
+        // DI_NODIR - so that is the angle that has to resolve, for the flight frames and for
+        // the blast frames both.
+        for (p in GameData.projectiles.filter { wad.lumpsStartingWith(it.lumpPrefix).isNotEmpty() }) {
+            val set = SpriteSet(wad, p.lumpPrefix)
+            val frames = p.anim.frames.toList() + (p.burst?.frames?.toList() ?: emptyList())
+            for (f in frames.distinct()) {
+                assertTrue(
+                    set.resolve(f, 1) >= 0,
+                    "${p.lumpPrefix}: frame $f has no sprite at the angle a missile asks for",
+                )
+            }
+        }
+
         for (c in (GameData.creatures + GameData.player).filter { wad.lumpsStartingWith(it.lumpPrefix).isNotEmpty() }) {
             val set = SpriteSet(wad, c.lumpPrefix)
             val frames = (0 until c.walkFrames).toList() +
