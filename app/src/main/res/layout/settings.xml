@@ -35,21 +35,47 @@
     tools:context=".SettingsActivity">
 
     <!--
-        fitsSystemWindows so the strip lands *under* the status bar once the artwork has
-        scrolled away. Without it the tabs collapse to y=0 and the clock sits on top of
-        "Settings" - which is what the separate status scrim used to paper over, back when
-        nothing up here ever moved.
+        fitsSystemWindows so the strip lands under the status bar once the artwork has faded,
+        and because of what the root does with the ones that lack it.
+
+        CoordinatorLayout#layoutChild shrinks the parent rect by the insets for every child
+        that does not fit the system windows itself. The root does fit them, so a child
+        without the attribute is laid out below the status bar rather than behind it - which
+        is what happened to the artwork when this was taken off: a flat band of window
+        background above it, and the gradient meant for the clock drawn too low to reach it.
+        Every child of the root that has to touch an edge of the window carries it: this, the
+        button bar and the status scrim.
+
+        An AppBarLayout does keep the top inset back from its scroll range, so the header
+        never quite finishes leaving. That is handled where it belongs, in the fade - see
+        pinAndFadeHeader - rather than by taking the inset away from the layout.
     -->
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorSurfaceContainer"
+        android:elevation="1dp"
         android:fitsSystemWindows="true"
         app:liftOnScroll="false">
 
+    <!--
+        fitsSystemWindows, and the whole arrangement above turns on it.
+
+        AppBarLayout offsets its children by the status bar inset only when its first child
+        does *not* fit the system windows, and shortens its own scroll range by that inset
+        only when the first child *does*. The same condition read both ways, which is the pair
+        this screen needs: the artwork starts at the top of the window, and the header still
+        stops a status bar short of gone so the pinned tabs land under the clock.
+
+        The padding that would normally come with the attribute is refused in code - see
+        keepTheArtworkAtTheTop - because the artwork has to reach the edge, not sit inside it.
+    -->
     <FrameLayout
+        android:id="@+id/header"
         android:layout_width="match_parent"
         android:layout_height="@dimen/header_height"
+        android:fitsSystemWindows="true"
         app:layout_scrollFlags="scroll">
 
         <ImageView
@@ -70,6 +96,7 @@
             android:background="@drawable/header_scrim" />
 
         <LinearLayout
+            android:id="@+id/header_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
@@ -110,6 +137,13 @@
         above it scrolls away and the strip comes to rest at the top. Tabs you have to scroll
         back up to reach are tabs nobody uses; tabs pinned by hand halfway down the screen,
         which is what this was before, are worse.
+
+        48dp because that is what Material 3 gives a primary tab with a label and no icon -
+        64dp is the height for a tab that also has one, which these do not.
+
+        No android:background on it, ever: the strip's divider is the last layer of the
+        library's own m3_tabs_background, and setting a background replaces the drawable and
+        takes the divider with it. The colour comes through ThemeOverlay.Tabs instead.
     -->
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabs"
@@ -120,12 +154,19 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/page"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+        <!--
+            The column every page lives in. Its minimum height is set in code: a page shorter
+            than the screen plus the header cannot scroll far enough to close the header, and
+            the tabs then pin with a strip of artwork left above them.
+        -->
         <LinearLayout
+            android:id="@+id/page_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="?attr/colorSurfaceContainer"
@@ -175,7 +216,9 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:backgroundTint="@color/segmented_container"
                     android:saveEnabled="false"
+                    app:strokeColor="@color/segmented_stroke"
                     android:text="@string/fps_10" />
 
                 <com.google.android.material.button.MaterialButton
@@ -184,7 +227,9 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:backgroundTint="@color/segmented_container"
                     android:saveEnabled="false"
+                    app:strokeColor="@color/segmented_stroke"
                     android:text="@string/fps_15" />
 
                 <com.google.android.material.button.MaterialButton
@@ -193,7 +238,9 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:backgroundTint="@color/segmented_container"
                     android:saveEnabled="false"
+                    app:strokeColor="@color/segmented_stroke"
                     android:text="@string/fps_20" />
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
@@ -325,12 +372,35 @@
                     android:id="@+id/record_group"
                     style="@style/ListGroup" />
 
-                <TextView
+                <!--
+                    The page before there is anything to count. A row rather than a paragraph:
+                    loose text sits 16dp from the screen edge while every row's text starts at
+                    32dp, and on an otherwise empty page that leaves the one sentence there is
+                    leaning against the border. In a card it is an item of the list it is
+                    standing in for.
+                -->
+                <com.google.android.material.listitem.ListItemCardView
                     android:id="@+id/stats_empty"
-                    style="@style/SectionParagraph"
-                    android:text="@string/stats_empty"
+                    style="@style/Widget.Material3.ListItemCardView.Segmented"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="16dp"
                     android:visibility="gone"
-                    tools:visibility="visible" />
+                    app:swipeEnabled="false"
+                    tools:visibility="visible">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="@dimen/list_row_content"
+                        android:gravity="center_vertical"
+                        android:text="@string/stats_empty"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                </com.google.android.material.listitem.ListItemCardView>
 
                 <TextView
                     android:id="@+id/kills_header"
@@ -434,7 +504,11 @@
     <include layout="@layout/button_bar" />
 
     <!--
-        The status bar scrim, and the last child so it is over everything.
+        The status bar scrim, the last child and the highest, so it is over everything.
+
+        Being last is no longer enough: the app bar carries an elevation of its own, to keep
+        the page from scrolling over the tab strip, and elevation beats draw order. Two dp
+        against its one puts the gradient back above the artwork.
 
         The page slides up over the fixed header, which means its text reaches y=0 and passes
         under the clock, with nothing behind the status bar in edge-to-edge to separate them.
@@ -445,6 +519,8 @@
         android:id="@+id/status_scrim"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:elevation="2dp"
+        android:fitsSystemWindows="true"
         android:layout_gravity="top"
         android:background="@drawable/status_scrim" />
 

@@ -8,6 +8,11 @@
 
     Overdraw is a false positive here: this is not the window background but a bar
     pinned over a page that scrolls under it, so it has to paint its own surface.
+
+    fitsSystemWindows so the root CoordinatorLayout lays it against the bottom of the window
+    instead of against the top of the navigation bar. The inset is spent once, here, as the
+    padding the listener in SettingsActivity sets - without the attribute the layout spent it
+    too, and the page showed through the strip left underneath.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -16,6 +21,7 @@
     android:layout_height="wrap_content"
     android:layout_gravity="bottom"
     android:background="?attr/colorSurface"
+    android:fitsSystemWindows="true"
     android:orientation="vertical"
     android:padding="16dp"
     tools:ignore="Overdraw">

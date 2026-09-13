@@ -21,9 +21,13 @@ package io.github.massimonastasi.proflw
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.content.res.ColorStateList
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -38,9 +42,12 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isEmpty
 import androidx.core.view.isVisible
+import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.button.MaterialButtonToggleGroup
 import java.nio.channels.FileChannel
+import kotlin.math.abs
 
 /**
  * The settings screen, reached from the wallpaper picker's own Settings button and from the
@@ -59,6 +66,9 @@ import java.nio.channels.FileChannel
 class SettingsActivity : AppCompatActivity() {
 
     private val prefs by lazy { Settings.of(this) }
+
+    /** Set once the tabs exist; see [swipeBetweenTabs]. */
+    private var swipe: GestureDetector? = null
 
     /** The palette of whichever WAD is active, so the swatches show real colours. */
     private var palette = IntArray(256) { Color.BLACK }
@@ -161,6 +171,11 @@ class SettingsActivity : AppCompatActivity() {
             insets
         }
 
+        pinAndFadeHeader()
+        keepTheArtworkAtTheTop()
+        keepPageScrollable()
+
+
         findViewById<MaterialButton>(R.id.set_wallpaper).setOnClickListener {
             SetupActivity.open(this) { setWallpaper.launch(it) }
         }
@@ -185,6 +200,75 @@ class SettingsActivity : AppCompatActivity() {
         // After showSprites, which is the call that notices: the file is discarded the first
         // time anybody asks for it, and this is where the user finds out why it is gone.
         if (WadStore.takeStaleNotice(this)) explain(R.string.wad_stale_title, getString(R.string.wad_stale))
+    }
+
+    /**
+     * Every page is at least tall enough to scroll the header away.
+     *
+     * The header collapses on what the page scrolls, so a page that ends before the header has
+     * finished leaves it half open - the artwork stops a band short of gone and the tabs pin
+     * underneath it. Statistics on a fresh install is three lines long, which is exactly when
+     * it showed. The minimum is the viewport plus the header's travel, so the last row can
+     * still reach the top of the screen.
+     *
+     * Re-applied on layout rather than once: the three pages differ in height and the tabs
+     * swap between them.
+     */
+    private fun keepPageScrollable() {
+        val page = findViewById<View>(R.id.page)
+        val content = findViewById<View>(R.id.page_content)
+        val bar = findViewById<AppBarLayout>(R.id.app_bar)
+        page.addOnLayoutChangeListener { _, _, top, _, bottom, _, _, _, _ ->
+            val least = (bottom - top) + bar.totalScrollRange
+            if (content.minimumHeight != least) content.minimumHeight = least
+        }
+    }
+
+    /**
+     * The header fits the system windows, and keeps none of the padding that implies.
+     *
+     * It declares the attribute for what it tells the app bar above it - do not offset the
+     * children, do shorten the scroll range - and a FrameLayout would otherwise answer by
+     * padding itself out of the status bar, which is the one thing the artwork must not do.
+     * Returning the insets untouched is what refuses that padding; nothing else consumes them,
+     * so the scrim and the button bar still get their own.
+     */
+    private fun keepTheArtworkAtTheTop() {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.header)) { _, insets -> insets }
+    }
+
+    /**
+     * The header stays where it is and fades out instead of scrolling away.
+     *
+     * An AppBarLayout always keeps the top inset back from its scroll range - it is built for
+     * a toolbar pinned under the status bar, and there is no toolbar here. Measured on a Pixel
+     * 6a: the artwork stops 132px short of gone and that band, the bottom of the image with
+     * the title on it, sits behind the clock above the pinned tabs. Nothing in the layout
+     * fixes that, because the header is never asked to leave completely.
+     *
+     * So it is asked to leave visibly rather than physically. translationY cancels the scroll
+     * exactly, which is where this page started before there were tabs: the image holds still
+     * while the page and the strip climb over it. The alpha does the leaving, and at rest the
+     * band behind the clock is the app bar's own opaque surface.
+     *
+     * The status scrim goes with it, on the same fraction. It is the last child of the layout
+     * and therefore over everything, including the strip once that has pinned - a dark
+     * gradient across the top of the tabs, which reads as a piece of the header showing
+     * through them. It exists to keep white title text off the clock, and by then there is no
+     * title left to protect.
+     */
+    private fun pinAndFadeHeader() {
+        val scrim = findViewById<View>(R.id.status_scrim)
+        val header = findViewById<View>(R.id.header)
+        findViewById<AppBarLayout>(R.id.app_bar).addOnOffsetChangedListener(
+            AppBarLayout.OnOffsetChangedListener { bar, offset ->
+                val range = bar.totalScrollRange
+                val gone = if (range == 0) 0f else abs(offset).toFloat() / range
+                header.translationY = -offset.toFloat()
+                header.alpha = 1f - gone
+                scrim.alpha = 1f - gone
+            }
+        )
     }
 
     /**
@@ -217,6 +301,38 @@ class SettingsActivity : AppCompatActivity() {
             override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab) = show(tab.position)
         })
         show(0)
+
+        swipeBetweenTabs(tabs, pages.size)
+    }
+
+    /**
+     * A horizontal fling anywhere on the page moves to the next tab.
+     *
+     * ponytail: a fling, not a drag - the page does not follow the finger, because following
+     * it is what a ViewPager2 is for, and that is a dependency and a fragment host this app
+     * does not have for three views that are shown and hidden.
+     *
+     * Fed from [dispatchTouchEvent] rather than a touch listener on the scrolling view: the
+     * rows are clickable and swallow the gesture before any parent sees it, so a swipe that
+     * began on a row did nothing. Dispatch sees every event whoever ends up consuming it, and
+     * nothing is consumed here - the detector only reads what goes past.
+     */
+    private fun swipeBetweenTabs(tabs: com.google.android.material.tabs.TabLayout, count: Int) {
+        val slop = ViewConfiguration.get(this).scaledMinimumFlingVelocity * 2
+        swipe = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onFling(e1: MotionEvent?, e2: MotionEvent, vx: Float, vy: Float): Boolean {
+                // Horizontal has to win outright, or a fast diagonal scroll changes the tab.
+                if (abs(vx) < slop || abs(vx) < abs(vy) * 2) return false
+                val next = tabs.selectedTabPosition + if (vx < 0) 1 else -1
+                if (next in 0 until count) tabs.selectTab(tabs.getTabAt(next))
+                return false
+            }
+        })
+    }
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        swipe?.onTouchEvent(event)
+        return super.dispatchTouchEvent(event)
     }
 
     // ------------------------------------------------------------------ sections
@@ -529,14 +645,14 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     /**
-     * One statistics row: a portrait where there is one, a name where there is not, a count.
+     * One statistics row: a portrait where there is one, the name, the count.
      *
      * Inflated rather than declared, because there is one per creature or pickup that has
      * actually happened and that is not known until the preferences are read.
      *
-     * The name is always the content description even when the portrait replaces it on screen.
-     * A column of pictures with numbers beside them is silent to a screen reader otherwise, and
-     * that is not a corner worth cutting.
+     * The name used to give way to the portrait, which left a column of pictures with numbers
+     * beside them: recognisable to whoever already knows the bestiary and to nobody else. The
+     * content description carries it either way, for a screen reader.
      */
     private fun statRow(group: LinearLayout, name: String, count: Int, sprite: Bitmap?) {
         val row = layoutInflater.inflate(R.layout.stat_row, group, false)
@@ -548,12 +664,18 @@ class SettingsActivity : AppCompatActivity() {
             // these are 40-pixel sprites blown up on a 3x screen, and bilinear filtering turns
             // pixel art into porridge. The wallpaper draws them the same way.
             image.setImageDrawable(BitmapDrawable(resources, sprite).apply { isFilterBitmap = false })
-            image.isVisible = true
-            label.text = ""
         } else {
-            image.isVisible = false
-            label.text = name
+            // A tally outlives the file that earned it - the keys are lump names - so a WAD
+            // that does not carry this creature still has to show its row. The slot keeps its
+            // width either way, or the column of portraits would break wherever one is missing.
+            image.setImageResource(R.drawable.ic_no_sprite)
+            image.imageTintList = ColorStateList.valueOf(
+                MaterialColors.getColor(image, com.google.android.material.R.attr.colorOnSurfaceVariant)
+            )
         }
+        // The rows are the tallies, not the bestiary: which ones exist is what has happened
+        // so far, and the loaded WAD decides only whether each one has a portrait to show.
+        label.text = name
         row.contentDescription = name
         row.findViewById<TextView>(R.id.stat_count).text = count.toString()
 
