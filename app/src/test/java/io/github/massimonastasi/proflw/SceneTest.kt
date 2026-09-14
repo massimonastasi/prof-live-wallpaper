@@ -574,8 +574,15 @@ class SceneTest {
         assertTrue(moves > 5000, "not enough movement sampled: $moves")
     }
 
+    /**
+     * The retreat, measured over a real run rather than a built scene.
+     *
+     * It counts only the tics where healing is on the ground, because that is what buys the
+     * retreat now: a weapon or an armour lying about is collected while fighting, not
+     * instead of it.
+     */
     @Test
-    fun `a hurt marine goes for supplies instead of shooting`() {
+    fun `a hurt marine goes for healing instead of shooting`() {
         GameData.clearRandom()
         val scene = Scene(worldWidth, worldHeight)
 
@@ -585,17 +592,17 @@ class SceneTest {
             scene.tick(t)
             val p = scene.actors.firstOrNull { it.isPlayer && !it.dead } ?: continue
             if (p.health * 2 >= GameData.player.health) continue
-            // Only counts when there is actually something to go and fetch.
-            if (scene.actors.none { it.mode == Mode.ITEM }) continue
+            // Only counts when there is actually healing to go and fetch.
+            if (scene.actors.none { it.mode == Mode.ITEM && it.item?.kind == GameData.ITEM_HEALTH }) continue
             hurtTics++
             if (p.mode == Mode.ATTACK) attackingWhileHurt++
         }
-        assertTrue(hurtTics > 100, "the marine was never hurt with an item available")
+        assertTrue(hurtTics > 100, "the marine was never hurt with healing available")
         // He may still be finishing an attack begun before dropping below half health, so
         // this is about not starting new ones rather than never being in the state.
         assertTrue(
             attackingWhileHurt * 4 < hurtTics,
-            "hurt with supplies around but still shooting for $attackingWhileHurt of $hurtTics tics",
+            "hurt with healing around but still shooting for $attackingWhileHurt of $hurtTics tics",
         )
     }
 
@@ -756,5 +763,73 @@ class SceneTest {
         repeat(lifetime + 1) { scene.tick(++t) }
         assertTrue(scene.actors.none { it.mode == Mode.EFFECT && it.anim === rocket.burst },
             "the blast must clear itself once it has run")
+    }
+
+    /**
+     * The debug readout's weapon line. It reports what [Scene.fireAttack] would reach for,
+     * and the arsenal is ranked by damage per second, so the answer is worth showing - but
+     * only while there is a marine to hold anything.
+     */
+    @Test
+    fun `the weapon in hand is readable, and only while the marine stands`() {
+        GameData.clearRandom()
+        val scene = Scene(worldWidth, worldHeight)
+        assertTrue(scene.playerWeapon == null, "nobody is on the field on the first tic")
+
+        var t = 0
+        while (t < TICRATE * 120 && scene.playerWeapon == null) scene.tick(++t)
+        val held = scene.playerWeapon
+        assertTrue(held != null, "the marine arrived and is holding nothing")
+        assertTrue(held in GameData.weapons, "the weapon is not one from the table")
+    }
+
+    /**
+     * Breaking off a fight costs the marine his gun, so only healing is worth it.
+     *
+     * It used to be any pickup at all, and nearestItem has no range: a weapon in the far
+     * corner took him out of the fight and walked him across the map, which is what "the
+     * marine stopped shooting for no reason" looked like from outside.
+     */
+    @Test
+    fun `a hurt marine keeps firing unless there is healing to fetch`() {
+        fun scene(pickup: GameData.Item): Scene {
+            GameData.clearRandom()
+            val s = Scene(worldWidth, worldHeight)
+            var t = 0
+            while (t < TICRATE * 120 && s.actors.none { it.isPlayer }) s.tick(++t)
+            val marine = s.actors.first { it.isPlayer }
+            // Hurt enough to want out, with a demon close enough to shoot at.
+            marine.health = GameData.player.health / 4
+            val zombie = GameData.creatures[0]
+            s.actors.add(Actor(zombie.spriteIndex).apply {
+                creature = zombie
+                health = zombie.health
+                x = marine.x + 200 * GameData.FRACUNIT
+                y = marine.y
+            })
+            s.actors.add(Actor(pickup.spriteIndex).apply {
+                mode = Mode.ITEM
+                item = pickup
+                x = marine.x
+                y = marine.y + 300 * GameData.FRACUNIT
+            })
+            repeat(60) { s.tick(++t) }
+            return s
+        }
+
+        val weapon = GameData.items.first { it.kind == GameData.ITEM_WEAPON }
+        val stimpack = GameData.items.first { it.kind == GameData.ITEM_HEALTH }
+
+        val withWeapon = scene(weapon).actors.first { it.isPlayer }
+        assertTrue(
+            withWeapon.mode == Mode.ATTACK,
+            "a gun on the ground is no reason to stop shooting, but he is ${withWeapon.mode}",
+        )
+
+        val withHealing = scene(stimpack).actors.first { it.isPlayer }
+        assertTrue(
+            withHealing.mode != Mode.ATTACK,
+            "healing within reach and hurt: he should be fetching it, not shooting",
+        )
     }
 }

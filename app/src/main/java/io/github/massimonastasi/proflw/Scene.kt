@@ -312,6 +312,16 @@ class Scene(
     val playerHealth: Int get() = player?.takeIf { !it.dead }?.health?.coerceAtLeast(0) ?: 0
     val playerArmor: Int get() = player?.takeIf { !it.dead }?.loadout?.armorPoints ?: 0
 
+    /**
+     * The weapon in hand, for the debug readout, or null while there is no marine standing.
+     *
+     * The same answer [fireAttack] acts on, asked from outside: the arsenal is ranked by
+     * damage per second and what it reaches for is not obvious from the field, which is the
+     * reason for showing it at all.
+     */
+    val playerWeapon: GameData.Weapon?
+        get() = player?.takeIf { !it.dead }?.let { GameData.weapons[currentWeaponIndex(it)] }
+
     private var tic = 0
     private var player: Actor? = null
     private var demonCount = 0
@@ -1051,11 +1061,18 @@ class Scene(
     private fun enemyOf(a: Actor): Actor? =
         if (a.isPlayer) nearestDemon(a) else player?.takeIf { !it.dead }
 
-    private fun nearestItem(from: Actor): Actor? {
+    /**
+     * The closest pickup on the ground, or the closest of one kind when [kind] is given.
+     *
+     * The kind matters because breaking off a fight is only worth it for health: see the
+     * retreat in [chase].
+     */
+    private fun nearestItem(from: Actor, kind: Int? = null): Actor? {
         var best: Actor? = null
         var bestDist = Int.MAX_VALUE
         for (o in actors) {
             if (o.mode != Mode.ITEM) continue
+            if (kind != null && o.item?.kind != kind) continue
             val d = approxDistance(from, o)
             if (d < bestDist) { bestDist = d; best = o }
         }
@@ -1273,9 +1290,17 @@ class Scene(
         // Below half health the marine breaks off and goes for supplies rather than trading
         // shots: staying in the fight while hurt is how he dies, and there is usually
         // something on the ground worth reaching.
+        //
+        // Only healing buys the retreat, though. It used to be any pickup at all, and
+        // nearestItem has no range: a shotgun lying in the far corner took his gun out of the
+        // fight and walked him across the map to fetch it, which from outside looks like a
+        // marine who has stopped shooting for no reason. Armour and weapons are still worth
+        // collecting - that is the line below - but they are worth collecting while fighting.
         val hurt = a.isPlayer && a.health * 2 < GameData.player.health
-        val supply = if (a.isPlayer && (hurt || dist > KEEP_AWAY)) nearestItem(a) else null
-        val breakingOff = hurt && supply != null
+        val healing = if (hurt) nearestItem(a, GameData.ITEM_HEALTH) else null
+        val supply = healing
+            ?: if (a.isPlayer && (hurt || dist > KEEP_AWAY)) nearestItem(a) else null
+        val breakingOff = healing != null
 
         if (target != null) {
             if (a.isPlayer && dist < KEEP_AWAY) {

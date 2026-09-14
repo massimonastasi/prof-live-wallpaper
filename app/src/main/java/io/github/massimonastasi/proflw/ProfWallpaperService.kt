@@ -325,7 +325,22 @@ class ProfWallpaperService : WallpaperService() {
          */
         private val densityScale = resources.displayMetrics.density / REFERENCE_DENSITY
         private val pxPerUnit = PX_PER_UNIT * densityScale
-        private val spriteScale = SPRITE_SCALE * densityScale
+
+        /** Sprites at 1x on this screen: what every release before the zoom drew at. */
+        private val baseSpriteScale = SPRITE_SCALE * densityScale
+
+        /**
+         * The size the creatures are drawn at, [SPRITE_SCALE] times whatever the user asked
+         * for. A var, unlike the two above it: it is the one of the three that is a setting.
+         *
+         * Only [drawActor] reads it. [pxPerUnit] is what the scene is measured in and stays
+         * where it is, so magnifying the sprites cannot move anybody, change a collision or
+         * shrink the field - it changes how big the fight looks and nothing else.
+         */
+        private var spriteScale = baseSpriteScale
+
+        /** The readout is interface rather than scene, so the zoom leaves it alone. */
+        private val readoutScale = baseSpriteScale * READOUT_SCALE
 
         private val drawRunnable = Runnable { step() }
 
@@ -496,6 +511,7 @@ class ProfWallpaperService : WallpaperService() {
             readoutVisible = Settings.readout(prefs)
             overlayVisible = Settings.overlay(prefs)
             debugVisible = Settings.debug(prefs)
+            spriteScale = baseSpriteScale * Settings.zoom(prefs)
             godMode = Settings.godMode(prefs)
 
             // A different WAD means every sprite, colour and floor is different, so the
@@ -805,10 +821,9 @@ class ProfWallpaperService : WallpaperService() {
             if (!readoutVisible) return
             val glyphs = digits ?: return
 
-            val scale = spriteScale * READOUT_SCALE
-            val gw = glyphs[0].width * scale
-            val gh = glyphs[0].height * scale
-            val pad = READOUT_PADDING * scale
+            val gw = glyphs[0].width * readoutScale
+            val gh = glyphs[0].height * readoutScale
+            val pad = READOUT_PADDING * readoutScale
             val baseline = frame.height() - gh - pad
 
             // With god mode on the two numbers say nothing: armour is untouched and health
@@ -835,13 +850,13 @@ class ProfWallpaperService : WallpaperService() {
             // Colour is what tells the two apart, which is why the percent sign is gone: it
             // occupied a glyph's width to say nothing. Position now says it too.
             hudPaint.colorFilter = armorFilter
-            drawNumber(canvas, armor, pad, baseline, scale)
+            drawNumber(canvas, armor, pad, baseline, readoutScale)
 
             // Digit counting rather than toString: the draw loop allocates nothing anywhere
             // else, and a throwaway string forty times a second is not the place to start.
             // The right-hand block is measured so it ends at the margin however wide it is.
             hudPaint.colorFilter = healthFilter
-            drawNumber(canvas, health, frame.width() - digitCount(health) * gw - pad, baseline, scale)
+            drawNumber(canvas, health, frame.width() - digitCount(health) * gw - pad, baseline, readoutScale)
         }
 
         /** GOD and MODE, in the corners the readout numbers otherwise occupy. */
@@ -972,7 +987,7 @@ class ProfWallpaperService : WallpaperService() {
 
         /**
          * What the fight will not say by itself: which rung it is on, which wave, how long
-         * until the next drop, and which WAD it is all drawn from. Off by default and plain
+         * until the next drop, what the marine has in his hands, and which WAD it is all drawn from. Off by default and plain
          * system text - the WAD's numerals are the ten digits and nothing else, so they
          * cannot spell any of this.
          */
@@ -1004,6 +1019,9 @@ class ProfWallpaperService : WallpaperService() {
                 "wave ${s.wave + 1}/${GameData.waves.size}",
                 "skill ${s.skill + 1} ${GameData.skills[s.skill]}",
                 "drop in ${s.ticsToDrop / TICRATE}s",
+                // What the arsenal reached for, which is ranked by damage per second and so
+                // is not the slot order anyone would guess from the field.
+                "weapon ${s.playerWeapon?.name ?: "-"}",
                 // Last because it is the slowest to change: it moves on an import or a
                 // reset and never during a fight, so it belongs under the three that do.
                 "wad $wadLabel",
