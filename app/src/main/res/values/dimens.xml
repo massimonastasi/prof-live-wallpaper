@@ -14,13 +14,25 @@
     -->
     <dimen name="list_row_gap">2dp</dimen>
     <!--
-        The portrait in a statistics row. 56dp because the row carries two lines of text and
-        Material 3 gives that row 72dp: a 56dp picture is what fits inside it with the
-        standard padding. The sprites are drawn at one scale per section - the tallest fills
-        this box and the rest keep their height relative to it - so this is also what decides
-        how small the smallest creature ends up.
+        The two statistics lists, sized by what they carry and by what Material 3 gives a
+        list item: 56dp for a row with one line of text, 88dp for one with two or three.
+
+        The pictures are fitted whole inside these boxes and never cropped, so the box is
+        also the answer to "how big is a creature next to another creature": inside one list
+        they all come out the same height, which is the price of never clipping the Overlord,
+        who is 256 pixels wide against the 102 of the next biggest.
     -->
-    <dimen name="stat_sprite_size">56dp</dimen>
+    <dimen name="stat_sprite_item">40dp</dimen>
+    <dimen name="list_row_item">56dp</dimen>
+    <!--
+        The creature box is wider than it is tall because one creature is: the Overlord is
+        256x100 pixels, and in a square box the width decided the scale and left him 25dp
+        tall out of 64. At 96x64 he comes out at very nearly his own size, and the ones built
+        upright still fill the height.
+    -->
+    <dimen name="stat_sprite_creature_width">96dp</dimen>
+    <dimen name="stat_sprite_creature">64dp</dimen>
+    <dimen name="list_row_creature">88dp</dimen>
     <!--
         The content of a list row, inside the padding the ListItemCardView adds of its own.
         One number for all three tabs: a statistics row that is taller than a settings row is

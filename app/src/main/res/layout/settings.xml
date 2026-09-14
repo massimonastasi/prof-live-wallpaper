@@ -441,35 +441,6 @@
                     android:id="@+id/record_group"
                     style="@style/ListGroup" />
 
-                <!--
-                    The page before there is anything to count. A row rather than a paragraph:
-                    loose text sits 16dp from the screen edge while every row's text starts at
-                    32dp, and on an otherwise empty page that leaves the one sentence there is
-                    leaning against the border. In a card it is an item of the list it is
-                    standing in for.
-                -->
-                <com.google.android.material.listitem.ListItemCardView
-                    android:id="@+id/stats_empty"
-                    style="@style/Widget.Material3.ListItemCardView.Segmented"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:visibility="gone"
-                    app:swipeEnabled="false"
-                    tools:visibility="visible">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:minHeight="@dimen/list_row_content"
-                        android:gravity="center_vertical"
-                        android:text="@string/stats_empty"
-                        android:textAppearance="?attr/textAppearanceBodyMedium"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
-
-                </com.google.android.material.listitem.ListItemCardView>
 
                 <TextView
                     android:id="@+id/kills_header"

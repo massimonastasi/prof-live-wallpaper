@@ -663,7 +663,7 @@ class SettingsActivity : AppCompatActivity() {
             resources.getQuantityString(R.plurals.settings_completed_record, runs, runs),
             getString(R.string.settings_completed_first, date),
             sprite = null,
-            scale = 1f,
+            big = true,
             icon = R.drawable.ic_completed,
         )
         shapeGroup(R.id.record_group)
@@ -672,21 +672,32 @@ class SettingsActivity : AppCompatActivity() {
     /**
      * One statistics row: a sprite, a line of text, and a second line when there is one.
      *
-     * [scale] is the section's own, not the row's: every sprite in a list is drawn at the
-     * same magnification so their sizes mean something next to each other. Without it a
-     * stimpack, which is 19x10 pixels, was blown up to the same box as a Cyberlord.
+     * [big] picks which of the two sizes the row is: a creature carries two numbers and gets
+     * Material 3's tallest list item with a 64dp picture, a pickup carries one and gets the
+     * single-line height with a 40dp picture. The sprite is fitted whole inside whichever
+     * box it lands in, so nothing is ever cropped.
      */
     private fun statRow(
         group: LinearLayout,
         label: String,
         caption: String?,
         sprite: Bitmap?,
-        scale: Float,
+        big: Boolean,
         icon: Int = 0,
     ) {
         val row = layoutInflater.inflate(R.layout.stat_row, group, false)
         val image = row.findViewById<ImageView>(R.id.stat_sprite)
-        val box = resources.getDimensionPixelSize(R.dimen.stat_sprite_size).toFloat()
+
+        val height = resources.getDimensionPixelSize(
+            if (big) R.dimen.stat_sprite_creature else R.dimen.stat_sprite_item
+        )
+        val width = resources.getDimensionPixelSize(
+            if (big) R.dimen.stat_sprite_creature_width else R.dimen.stat_sprite_item
+        )
+        image.layoutParams = image.layoutParams.also { it.width = width; it.height = height }
+        row.findViewById<View>(R.id.stat_row).minimumHeight = resources.getDimensionPixelSize(
+            if (big) R.dimen.list_row_creature else R.dimen.list_row_item
+        )
 
         if (sprite != null) {
             // A BitmapDrawable rather than setImageBitmap, so the filter can be turned off:
@@ -694,24 +705,33 @@ class SettingsActivity : AppCompatActivity() {
             // pixel art into porridge. The wallpaper draws them the same way.
             image.setImageDrawable(BitmapDrawable(resources, sprite).apply { isFilterBitmap = false })
             image.imageTintList = null
-            image.imageMatrix = Matrix().apply {
-                setScale(scale, scale)
-                postTranslate((box - sprite.width * scale) / 2f, (box - sprite.height * scale) / 2f)
+
+            // fitCenter would magnify until something touches an edge, and the smallest
+            // sprites gain the most by it: a stimpack came out five and a half times its
+            // size, as large in the row as the armour it is a fraction of. Past three times
+            // the sprite is drawn at three times and centred instead.
+            val fit = minOf(width / sprite.width.toFloat(), height / sprite.height.toFloat())
+            if (fit > MAX_SPRITE_UPSCALE) {
+                image.scaleType = ImageView.ScaleType.MATRIX
+                image.imageMatrix = Matrix().apply {
+                    setScale(MAX_SPRITE_UPSCALE, MAX_SPRITE_UPSCALE)
+                    postTranslate(
+                        (width - sprite.width * MAX_SPRITE_UPSCALE) / 2f,
+                        (height - sprite.height * MAX_SPRITE_UPSCALE) / 2f,
+                    )
+                }
+            } else {
+                image.scaleType = ImageView.ScaleType.FIT_CENTER
             }
         } else {
-            // A tally outlives the file that earned it - the keys are lump names - so a WAD
-            // that does not carry this creature still has to show its row. The slot keeps its
-            // width either way, or the column of pictures would break wherever one is missing.
+            // A tally outlives the file that earned it - the keys are lump names - and the
+            // list shows every creature whether or not this WAD can draw it, so the slot has
+            // to hold something either way.
+            image.scaleType = ImageView.ScaleType.FIT_CENTER
             image.setImageResource(if (icon != 0) icon else R.drawable.ic_no_sprite)
             image.imageTintList = ColorStateList.valueOf(
                 MaterialColors.getColor(image, com.google.android.material.R.attr.colorOnSurfaceVariant)
             )
-            image.imageMatrix = Matrix().apply {
-                val d = image.drawable ?: return@apply
-                val k = box / maxOf(d.intrinsicWidth, d.intrinsicHeight).toFloat()
-                setScale(k, k)
-                postTranslate((box - d.intrinsicWidth * k) / 2f, (box - d.intrinsicHeight * k) / 2f)
-            }
         }
 
         row.findViewById<TextView>(R.id.stat_label).text = label
@@ -737,59 +757,35 @@ class SettingsActivity : AppCompatActivity() {
     private fun showStatistics() {
         showCompleted()
 
-        val met = Statistics.encounters(prefs)
-        val pickups = Statistics.pickups(prefs)
-
-        // One scale per section, from the tallest sprite in it: see statRow.
-        val faces = met.map { portrait(it.creature.spriteIndex) }
-        // The creatures are drawn half again as large as they would fit: a bestiary that
-        // spans a zombie and an Overlord leaves the small ones too small to tell apart, and
-        // the tallest overflowing its box a little costs less than that. The pickups need no
-        // such help - they are all within a factor of three of each other.
-        fill(R.id.kills_group, R.id.kills_header, magnify = 1.5f, rows = met.mapIndexed { i, e ->
-            // Bare numbers: the legend under the heading says which is which, so every row
-            // does not have to repeat it.
+        // Every creature and every pickup, whether or not it has happened yet: a zero is an
+        // answer too, and a list that grows as things are met gave no sense of what is left
+        // to meet. The order is the bestiary's own, weakest first.
+        fill(R.id.kills_group, R.id.kills_header, big = true, rows = Statistics.encounters(prefs).map { e ->
             Row(
+                // Bare numbers: the legend under the heading says which is which, so every
+                // row does not have to repeat it.
                 e.killed.toString(),
-                // A creature that has never killed him says so by not saying it.
-                if (e.killedBy > 0) e.killedBy.toString() else null,
-                faces[i],
+                // Zero included: an empty second line would read as a missing count rather
+                // than as a creature that has never managed it.
+                e.killedBy.toString(),
+                portrait(e.creature.spriteIndex),
             )
         })
 
-        val things = pickups.map { portrait(it.first.spriteIndex) }
-        fill(R.id.pickups_group, R.id.pickups_header, pickups.mapIndexed { i, (_, n) ->
-            Row(n.toString(), null, things[i])
+        fill(R.id.pickups_group, R.id.pickups_header, big = false, rows = Statistics.pickups(prefs).map { (item, n) ->
+            Row(n.toString(), null, portrait(item.spriteIndex))
         })
-
-        // One sentence instead of empty headings: a statistics page with nothing under any
-        // of them reads like a fault rather than like a marine who has just started.
-        val anything = Settings.completions(prefs) > 0 || met.isNotEmpty() || pickups.isNotEmpty()
-        findViewById<View>(R.id.stats_empty).isVisible = !anything
     }
 
     /** What a statistics row shows: a line, a second line when there is one, a picture. */
     private class Row(val label: String, val caption: String?, val sprite: Bitmap?)
 
-    private fun fill(groupId: Int, headerId: Int, rows: List<Row>, magnify: Float = 1f) {
+    private fun fill(groupId: Int, headerId: Int, rows: List<Row>, big: Boolean) {
         val group = findViewById<LinearLayout>(groupId)
         group.removeAllViews()
         findViewById<View>(headerId).isVisible = rows.isNotEmpty()
         group.isVisible = rows.isNotEmpty()
-
-        // The scale the whole section is drawn at: the tallest sprite fills the box and the
-        // rest keep their height relative to it.
-        //
-        // Height, not the larger of the two sides. The Overlord is 256 pixels wide against
-        // the 102 of the next biggest - it is a spider, drawn legs out - and scaling to fit
-        // that width left a zombie nine dp tall. Height is what the eye compares between
-        // figures standing on a floor, and the one creature wider than its box is clipped at
-        // the sides, which costs it some legs and no recognition.
-        val box = resources.getDimensionPixelSize(R.dimen.stat_sprite_size).toFloat()
-        val tallest = rows.mapNotNull { it.sprite }.maxOfOrNull { it.height } ?: 1
-        val scale = box / tallest
-
-        for (r in rows) statRow(group, r.label, r.caption, r.sprite, scale * magnify)
+        for (r in rows) statRow(group, r.label, r.caption, r.sprite, big)
         if (rows.isNotEmpty()) shapeGroup(groupId)
     }
 
@@ -1016,6 +1012,16 @@ class SettingsActivity : AppCompatActivity() {
         .show()
 
     private companion object {
+        /**
+         * The most a statistics sprite is ever enlarged.
+         *
+         * Doom art is drawn to be seen at its own size; a stimpack is nineteen pixels across,
+         * and fitting it to the same box as everything else made it five and a half times
+         * that - a first aid kit the size of a suit of armour. Past this it is drawn at this
+         * and centred in whatever room is left.
+         */
+        const val MAX_SPRITE_UPSCALE = 3f
+
         /**
          * How far past the status bar the scrim reaches, as a multiple of its height.
          *

@@ -143,14 +143,17 @@ class StatisticsTest {
      * The order of the rows, which is the table's and not the tally's: the bestiary climbs
      * from the weakest creature to the strongest, and a page sorted by count would put a boss
      * killed twice above a zombie killed two hundred times.
+     *
+     * Zeros stay. They used to be dropped, so the page filled up as the marine earned it -
+     * but with no names on the page a missing row said nothing, and the whole table is what
+     * tells you how much of the bestiary is still out there.
      */
     @Test
-    fun `rank keeps the table order and drops the zeros`() {
+    fun `rank keeps the table order, zeros and all`() {
         val things = listOf("weakest", "middling", "never met", "strongest")
         val ranked = Statistics.rank(things, intArrayOf(200, 5, 0, 2))
 
-        assertEquals(listOf("weakest", "middling", "strongest"), ranked.map { it.first },
-            "the table's own order decides, not the counts")
-        assertEquals(listOf(200, 5, 2), ranked.map { it.second }, "each keeps its own tally")
+        assertEquals(things, ranked.map { it.first }, "the table's own order decides, not the counts")
+        assertEquals(listOf(200, 5, 0, 2), ranked.map { it.second }, "each keeps its own tally")
     }
 }

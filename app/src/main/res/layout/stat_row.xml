@@ -26,25 +26,26 @@
     tools:shapeAppearance="@style/ShapeAppearance.Material3.MediumComponent">
 
     <LinearLayout
+        android:id="@+id/stat_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:minHeight="@dimen/list_row_content"
+        android:minHeight="@dimen/list_row_item"
         android:orientation="horizontal">
 
         <!--
-            scaleType="matrix" rather than fitCenter, and the matrix is set per row in
-            statRow: fitCenter blows every sprite up to fill the box, which made a 19x10
-            stimpack four times its size while the 89x102 Cyberlord was shrunk. One scale per
-            section keeps them in proportion to each other.
+            fitCenter, so nothing is ever cropped: the sprite is fitted whole inside the box
+            and the box is what differs between the two lists - a creature gets a larger one
+            than a pickup. Both sizes and the row height are set from code, because one
+            layout serves both lists.
         -->
         <ImageView
             android:id="@+id/stat_sprite"
-            android:layout_width="@dimen/stat_sprite_size"
-            android:layout_height="@dimen/stat_sprite_size"
+            android:layout_width="@dimen/stat_sprite_item"
+            android:layout_height="@dimen/stat_sprite_item"
             android:layout_marginEnd="16dp"
             android:saveEnabled="false"
-            android:scaleType="matrix"
+            android:scaleType="fitCenter"
             tools:src="@drawable/ic_completed" />
 
         <LinearLayout

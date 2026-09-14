@@ -32,8 +32,7 @@ import android.content.SharedPreferences
 object Statistics {
 
     /**
-     * Pairs each thing with its tally and drops the ones that never happened, keeping the
-     * order of the table it came from.
+     * Pairs each thing with its tally, keeping the order of the table it came from.
      *
      * That order is the answer to "in what order", and it is already written down elsewhere:
      * [GameData.creatures] climbs from the Zombie to the Overlord, so the rows run from the
@@ -42,13 +41,14 @@ object Statistics {
      * the plain one to the powerful one. Sorting by tally instead put a boss between two
      * zombies and a rocket launcher between two stimpacks, which is a ranking of luck.
      *
-     * Dropping zeros is what keeps the page honest early on: fourteen creatures and nine
-     * pickups would otherwise be a wall of noughts on a phone that has had the wallpaper for
-     * an hour. The list grows as the marine earns it.
+     * Zeros are kept. The list used to grow as the marine earned it, which read well on a
+     * fresh install and badly afterwards: with no names on the page there was no way to tell
+     * a creature that has never appeared from one this WAD cannot draw, and no sense of how
+     * much of the bestiary was still out there. The whole table shows, and a nought is an
+     * answer.
      */
     internal fun <T> rank(things: List<T>, counts: IntArray): List<Pair<T, Int>> =
         things.mapIndexed { i, t -> t to counts[i] }
-            .filter { it.second > 0 }
 
     private fun read(size: Int, at: (Int) -> Int) = IntArray(size) { at(it) }
 
@@ -67,9 +67,7 @@ object Statistics {
      * a death has no row.
      */
     fun encounters(p: SharedPreferences): List<Encounter> =
-        GameData.creatures
-            .map { Encounter(it, Settings.kills(p, it), Settings.deaths(p, it)) }
-            .filter { it.killed > 0 || it.killedBy > 0 }
+        GameData.creatures.map { Encounter(it, Settings.kills(p, it), Settings.deaths(p, it)) }
 
     fun pickups(p: SharedPreferences): List<Pair<GameData.Item, Int>> =
         rank(GameData.items, read(GameData.items.size) { Settings.pickups(p, GameData.items[it]) })
