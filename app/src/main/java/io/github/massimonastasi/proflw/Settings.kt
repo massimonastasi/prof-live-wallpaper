@@ -39,6 +39,7 @@ object Settings {
     // preference library addressed every row by key. Nothing has addressed a row by key since
     // that library was dropped, and seven of these had no reader left anywhere.
     const val KEY_FPS = "fps"
+    const val KEY_ZOOM = "zoom"
     const val KEY_READOUT = "readout"
     const val KEY_BACKGROUND = "background"
     const val KEY_BACKGROUND_COLOUR = "background_colour"
@@ -62,6 +63,9 @@ object Settings {
 
     const val DEFAULT_FPS = 20
 
+    /** 1x is the size every screenshot and every previous release was drawn at. */
+    const val DEFAULT_ZOOM = 1f
+
     fun of(context: Context): SharedPreferences =
         context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
@@ -71,6 +75,20 @@ object Settings {
      */
     fun fps(p: SharedPreferences): Int =
         p.getString(KEY_FPS, null)?.toIntOrNull()?.takeIf { it in 5..60 } ?: DEFAULT_FPS
+
+    /**
+     * How much larger the creatures are drawn, and nothing else.
+     *
+     * The scene is untouched: positions, radii and distances are in map units and stay
+     * there, so this cannot make the fight easier or harder - only easier or harder to see.
+     * Which is the point on a dense screen, where the sprites follow the density and the
+     * floor tile does not.
+     *
+     * A string like the frame rate, and range-checked on the way out for the same reason: a
+     * value edited by hand into the preferences file cannot blow the sprites up.
+     */
+    fun zoom(p: SharedPreferences): Float =
+        p.getString(KEY_ZOOM, null)?.toFloatOrNull()?.takeIf { it in 0.5f..2f } ?: DEFAULT_ZOOM
 
     /** Health and armour, drawn at the bottom of the screen. */
     fun readout(p: SharedPreferences): Boolean = p.getBoolean(KEY_READOUT, true)

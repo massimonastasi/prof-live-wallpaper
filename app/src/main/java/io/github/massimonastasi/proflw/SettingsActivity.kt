@@ -19,9 +19,10 @@
 package io.github.massimonastasi.proflw
 
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.content.res.ColorStateList
+import android.graphics.Matrix
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.view.GestureDetector
@@ -44,8 +45,8 @@ import androidx.core.view.isEmpty
 import androidx.core.view.isVisible
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.color.MaterialColors
 import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.android.material.color.MaterialColors
 import java.nio.channels.FileChannel
 import kotlin.math.abs
 
@@ -185,6 +186,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         showFrameRate()
+        showZoom()
         showSwitches()
         showBackground()
         showSprites()
@@ -355,6 +357,24 @@ class SettingsActivity : AppCompatActivity() {
                     else -> Settings.Knock.NONE
                 },
             )
+        }
+    }
+
+    /**
+     * The sprite zoom, driven exactly like the frame rate above and stored the same way.
+     *
+     * It is not part of the knock sequence: that reads three controls and adding a fourth
+     * would change a sequence people have written down.
+     */
+    private fun showZoom() {
+        val group = findViewById<MaterialButtonToggleGroup>(R.id.zoom_group)
+        val ids = intArrayOf(R.id.zoom_075, R.id.zoom_100, R.id.zoom_125, R.id.zoom_150)
+        val values = floatArrayOf(0.75f, 1f, 1.25f, 1.5f)
+        group.check(ids[values.indexOfFirst { it == Settings.zoom(prefs) }.coerceAtLeast(0)])
+        group.addOnButtonCheckedListener { _, id, checked ->
+            if (!checked) return@addOnButtonCheckedListener
+            val zoom = values[ids.indexOf(id).coerceAtLeast(0)]
+            prefs.edit { putString(Settings.KEY_ZOOM, zoom.toString()) }
         }
     }
 
@@ -636,63 +656,75 @@ class SettingsActivity : AppCompatActivity() {
         // Formatted by the platform, so the order of day and month is the reader's own.
         val date = java.text.DateFormat.getDateInstance(java.text.DateFormat.LONG)
             .format(java.util.Date(Settings.firstCompletion(prefs)))
-        recordRow(
+        // The date is the supporting line, not a trailing column: as trailing text it took
+        // the whole row and folded "Finished once" into a stack one letter wide.
+        statRow(
             group,
             resources.getQuantityString(R.plurals.settings_completed_record, runs, runs),
             getString(R.string.settings_completed_first, date),
+            sprite = null,
+            scale = 1f,
+            icon = R.drawable.ic_completed,
         )
         shapeGroup(R.id.record_group)
     }
 
     /**
-     * One statistics row: a portrait where there is one, the name, the count.
+     * One statistics row: a sprite, a line of text, and a second line when there is one.
      *
-     * Inflated rather than declared, because there is one per creature or pickup that has
-     * actually happened and that is not known until the preferences are read.
-     *
-     * The name used to give way to the portrait, which left a column of pictures with numbers
-     * beside them: recognisable to whoever already knows the bestiary and to nobody else. The
-     * content description carries it either way, for a screen reader.
+     * [scale] is the section's own, not the row's: every sprite in a list is drawn at the
+     * same magnification so their sizes mean something next to each other. Without it a
+     * stimpack, which is 19x10 pixels, was blown up to the same box as a Cyberlord.
      */
-    private fun statRow(group: LinearLayout, name: String, count: Int, sprite: Bitmap?) {
+    private fun statRow(
+        group: LinearLayout,
+        label: String,
+        caption: String?,
+        sprite: Bitmap?,
+        scale: Float,
+        icon: Int = 0,
+    ) {
         val row = layoutInflater.inflate(R.layout.stat_row, group, false)
         val image = row.findViewById<ImageView>(R.id.stat_sprite)
-        val label = row.findViewById<TextView>(R.id.stat_label)
+        val box = resources.getDimensionPixelSize(R.dimen.stat_sprite_size).toFloat()
 
         if (sprite != null) {
             // A BitmapDrawable rather than setImageBitmap, so the filter can be turned off:
-            // these are 40-pixel sprites blown up on a 3x screen, and bilinear filtering turns
+            // these are small sprites blown up on a 3x screen, and bilinear filtering turns
             // pixel art into porridge. The wallpaper draws them the same way.
             image.setImageDrawable(BitmapDrawable(resources, sprite).apply { isFilterBitmap = false })
+            image.imageTintList = null
+            image.imageMatrix = Matrix().apply {
+                setScale(scale, scale)
+                postTranslate((box - sprite.width * scale) / 2f, (box - sprite.height * scale) / 2f)
+            }
         } else {
             // A tally outlives the file that earned it - the keys are lump names - so a WAD
             // that does not carry this creature still has to show its row. The slot keeps its
-            // width either way, or the column of portraits would break wherever one is missing.
-            image.setImageResource(R.drawable.ic_no_sprite)
+            // width either way, or the column of pictures would break wherever one is missing.
+            image.setImageResource(if (icon != 0) icon else R.drawable.ic_no_sprite)
             image.imageTintList = ColorStateList.valueOf(
                 MaterialColors.getColor(image, com.google.android.material.R.attr.colorOnSurfaceVariant)
             )
+            image.imageMatrix = Matrix().apply {
+                val d = image.drawable ?: return@apply
+                val k = box / maxOf(d.intrinsicWidth, d.intrinsicHeight).toFloat()
+                setScale(k, k)
+                postTranslate((box - d.intrinsicWidth * k) / 2f, (box - d.intrinsicHeight * k) / 2f)
+            }
         }
-        // The rows are the tallies, not the bestiary: which ones exist is what has happened
-        // so far, and the loaded WAD decides only whether each one has a portrait to show.
-        label.text = name
-        row.contentDescription = name
-        row.findViewById<TextView>(R.id.stat_count).text = count.toString()
+
+        row.findViewById<TextView>(R.id.stat_label).text = label
+        row.findViewById<TextView>(R.id.stat_caption).apply {
+            text = caption.orEmpty()
+            isVisible = !caption.isNullOrEmpty()
+        }
+        row.contentDescription = if (caption != null) "$label. $caption" else label
 
         if (group.childCount > 0) {
             (row.layoutParams as? ViewGroup.MarginLayoutParams)
                 ?.topMargin = resources.getDimensionPixelSize(R.dimen.list_row_gap)
         }
-        group.addView(row)
-    }
-
-    /** The completion record, which has an icon of its own rather than a portrait. */
-    private fun recordRow(group: LinearLayout, label: String, caption: String) {
-        val row = layoutInflater.inflate(R.layout.stat_row, group, false)
-        row.findViewById<ImageView>(R.id.stat_sprite).setImageResource(R.drawable.ic_completed)
-        row.findViewById<TextView>(R.id.stat_label).text = label
-        row.findViewById<TextView>(R.id.stat_count).text = caption
-        row.contentDescription = "$label. $caption"
         group.addView(row)
     }
 
@@ -705,39 +737,59 @@ class SettingsActivity : AppCompatActivity() {
     private fun showStatistics() {
         showCompleted()
 
-        val kills = Statistics.kills(prefs)
-        val deaths = Statistics.deaths(prefs)
+        val met = Statistics.encounters(prefs)
         val pickups = Statistics.pickups(prefs)
 
-        fill(R.id.kills_group, R.id.kills_header, kills.map { (c, n) ->
-            Triple(c.name, n, portrait(c.spriteIndex))
-        })
-        fill(R.id.deaths_group, R.id.deaths_header, deaths.map { (c, n) ->
-            Triple(c.name, n, portrait(c.spriteIndex))
-        })
-        fill(R.id.pickups_group, R.id.pickups_header, pickups.map { (item, n) ->
-            val named = Statistics.itemName(item)
-            val name = when {
-                named != null -> getString(named)
-                item.kind == GameData.ITEM_WEAPON -> GameData.weapons[item.extra].name
-                else -> item.lumpPrefix
-            }
-            Triple(name, n, portrait(item.spriteIndex))
+        // One scale per section, from the tallest sprite in it: see statRow.
+        val faces = met.map { portrait(it.creature.spriteIndex) }
+        // The creatures are drawn half again as large as they would fit: a bestiary that
+        // spans a zombie and an Overlord leaves the small ones too small to tell apart, and
+        // the tallest overflowing its box a little costs less than that. The pickups need no
+        // such help - they are all within a factor of three of each other.
+        fill(R.id.kills_group, R.id.kills_header, magnify = 1.5f, rows = met.mapIndexed { i, e ->
+            // Bare numbers: the legend under the heading says which is which, so every row
+            // does not have to repeat it.
+            Row(
+                e.killed.toString(),
+                // A creature that has never killed him says so by not saying it.
+                if (e.killedBy > 0) e.killedBy.toString() else null,
+                faces[i],
+            )
         })
 
-        // One sentence instead of four empty headings: a statistics page with nothing under
-        // any of them reads like a fault rather than like a marine who has just started.
-        val anything = Settings.completions(prefs) > 0 ||
-            kills.isNotEmpty() || deaths.isNotEmpty() || pickups.isNotEmpty()
+        val things = pickups.map { portrait(it.first.spriteIndex) }
+        fill(R.id.pickups_group, R.id.pickups_header, pickups.mapIndexed { i, (_, n) ->
+            Row(n.toString(), null, things[i])
+        })
+
+        // One sentence instead of empty headings: a statistics page with nothing under any
+        // of them reads like a fault rather than like a marine who has just started.
+        val anything = Settings.completions(prefs) > 0 || met.isNotEmpty() || pickups.isNotEmpty()
         findViewById<View>(R.id.stats_empty).isVisible = !anything
     }
 
-    private fun fill(groupId: Int, headerId: Int, rows: List<Triple<String, Int, Bitmap?>>) {
+    /** What a statistics row shows: a line, a second line when there is one, a picture. */
+    private class Row(val label: String, val caption: String?, val sprite: Bitmap?)
+
+    private fun fill(groupId: Int, headerId: Int, rows: List<Row>, magnify: Float = 1f) {
         val group = findViewById<LinearLayout>(groupId)
         group.removeAllViews()
         findViewById<View>(headerId).isVisible = rows.isNotEmpty()
         group.isVisible = rows.isNotEmpty()
-        for ((name, n, sprite) in rows) statRow(group, name, n, sprite)
+
+        // The scale the whole section is drawn at: the tallest sprite fills the box and the
+        // rest keep their height relative to it.
+        //
+        // Height, not the larger of the two sides. The Overlord is 256 pixels wide against
+        // the 102 of the next biggest - it is a spider, drawn legs out - and scaling to fit
+        // that width left a zombie nine dp tall. Height is what the eye compares between
+        // figures standing on a floor, and the one creature wider than its box is clipped at
+        // the sides, which costs it some legs and no recognition.
+        val box = resources.getDimensionPixelSize(R.dimen.stat_sprite_size).toFloat()
+        val tallest = rows.mapNotNull { it.sprite }.maxOfOrNull { it.height } ?: 1
+        val scale = box / tallest
+
+        for (r in rows) statRow(group, r.label, r.caption, r.sprite, scale * magnify)
         if (rows.isNotEmpty()) shapeGroup(groupId)
     }
 

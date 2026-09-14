@@ -52,28 +52,26 @@ object Statistics {
 
     private fun read(size: Int, at: (Int) -> Int) = IntArray(size) { at(it) }
 
-    fun kills(p: SharedPreferences): List<Pair<GameData.Creature, Int>> =
-        rank(GameData.creatures, read(GameData.creatures.size) { Settings.kills(p, GameData.creatures[it]) })
+    /** One creature's two tallies: how many the marine killed, how often it killed him. */
+    class Encounter(val creature: GameData.Creature, val killed: Int, val killedBy: Int)
 
-    fun deaths(p: SharedPreferences): List<Pair<GameData.Creature, Int>> =
-        rank(GameData.creatures, read(GameData.creatures.size) { Settings.deaths(p, GameData.creatures[it]) })
+    /**
+     * The creatures met so far, each with both of its counts.
+     *
+     * One row per creature rather than two lists, because the page shows no names any more:
+     * the names are ours and an imported WAD draws somebody else's bestiary, so the sprite
+     * is the only honest label - and the same sprite appearing in two separate lists could
+     * not be recognised as the same creature.
+     *
+     * The order is the bestiary's, as in [rank], and a creature neither killed nor guilty of
+     * a death has no row.
+     */
+    fun encounters(p: SharedPreferences): List<Encounter> =
+        GameData.creatures
+            .map { Encounter(it, Settings.kills(p, it), Settings.deaths(p, it)) }
+            .filter { it.killed > 0 || it.killedBy > 0 }
 
     fun pickups(p: SharedPreferences): List<Pair<GameData.Item, Int>> =
         rank(GameData.items, read(GameData.items.size) { Settings.pickups(p, GameData.items[it]) })
 
-    /**
-     * A readable name for a pickup.
-     *
-     * Weapons already have one on [GameData.Weapon]; the health and armour items have only a
-     * WAD lump prefix, so the four names come from resources. Anything unexpected falls back
-     * to the prefix rather than crashing or showing an empty row - a WAD is user-supplied
-     * and this list follows what is in it.
-     */
-    fun itemName(item: GameData.Item): Int? = when (item.lumpPrefix) {
-        "STIM" -> R.string.item_stim
-        "MEDI" -> R.string.item_medi
-        "ARM1" -> R.string.item_arm1
-        "ARM2" -> R.string.item_arm2
-        else -> null
-    }
 }

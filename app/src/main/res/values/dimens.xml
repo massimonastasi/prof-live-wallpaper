@@ -14,11 +14,13 @@
     -->
     <dimen name="list_row_gap">2dp</dimen>
     <!--
-        A statistics row and the portrait in it. 40dp is enough for a sprite to be recognised
-        at a glance - most creatures are around 40x60 pixels - without turning the list into a
-        gallery that has to be scrolled past to reach the numbers.
+        The portrait in a statistics row. 56dp because the row carries two lines of text and
+        Material 3 gives that row 72dp: a 56dp picture is what fits inside it with the
+        standard padding. The sprites are drawn at one scale per section - the tallest fills
+        this box and the rest keep their height relative to it - so this is also what decides
+        how small the smallest creature ends up.
     -->
-    <dimen name="stat_sprite_size">40dp</dimen>
+    <dimen name="stat_sprite_size">56dp</dimen>
     <!--
         The content of a list row, inside the padding the ListItemCardView adds of its own.
         One number for all three tabs: a statistics row that is taller than a settings row is

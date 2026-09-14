@@ -245,6 +245,75 @@
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
+            <TextView
+                style="@style/SectionParagraph"
+                android:text="@string/settings_zoom_note" />
+
+            <!--
+                The same control as the frame rate above, down to the colour selectors, and
+                for the same reason saveEnabled is off on every button: the choice lives in
+                the preferences, and a restored checked state would fire the listener and
+                write the old value back.
+            -->
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/zoom_group"
+                style="@style/Widget.Material3.MaterialButtonGroup.Connected"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp"
+                app:selectionRequired="true"
+                app:singleSelection="true"
+                tools:shapeAppearance="@style/ShapeAppearance.Material3.MediumComponent">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/zoom_075"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/segmented_container"
+                    android:saveEnabled="false"
+                    android:text="@string/zoom_075"
+                    app:strokeColor="@color/segmented_stroke" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/zoom_100"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/segmented_container"
+                    android:saveEnabled="false"
+                    android:text="@string/zoom_100"
+                    app:strokeColor="@color/segmented_stroke" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/zoom_125"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/segmented_container"
+                    android:saveEnabled="false"
+                    android:text="@string/zoom_125"
+                    app:strokeColor="@color/segmented_stroke" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/zoom_150"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/segmented_container"
+                    android:saveEnabled="false"
+                    android:text="@string/zoom_150"
+                    app:strokeColor="@color/segmented_stroke" />
+
+
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
             <LinearLayout
                 android:id="@+id/switch_group"
                 style="@style/ListGroup">
@@ -407,17 +476,12 @@
                     style="@style/SectionHeader"
                     android:text="@string/stats_kills" />
 
+                <TextView
+                    style="@style/SectionParagraph"
+                    android:text="@string/stats_legend" />
+
                 <LinearLayout
                     android:id="@+id/kills_group"
-                    style="@style/ListGroup" />
-
-                <TextView
-                    android:id="@+id/deaths_header"
-                    style="@style/SectionHeader"
-                    android:text="@string/stats_deaths" />
-
-                <LinearLayout
-                    android:id="@+id/deaths_group"
                     style="@style/ListGroup" />
 
                 <TextView

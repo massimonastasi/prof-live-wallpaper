@@ -46,6 +46,16 @@
         it. The user who owns one knows what it is called.
     -->
     <string name="wad_too_few">That WAD carries only %d of the creatures this wallpaper draws. It names its creatures differently, so it cannot be used.</string>
+    <!--
+        The zoom labels are the multiplier and nothing else: five of them share one row, and
+        "0.75x" is already as wide as that row affords. 1.75x was tried and dropped: at that
+        size the largest creature covers two fifths of the screen's width.
+    -->
+    <string name="settings_zoom_note">How large the fighters are drawn.</string>
+    <string name="zoom_075">0.75x</string>
+    <string name="zoom_100">1x</string>
+    <string name="zoom_125">1.25x</string>
+    <string name="zoom_150">1.5x</string>
     <string name="settings_about">About</string>
     <!--
         The order is the argument, not a ranking. What this app is, where the idea came from,
@@ -70,7 +80,7 @@
     <string name="settings_overlay">Darken the background</string>
     <string name="settings_overlay_note">A second veil over it, for the icon labels</string>
     <string name="settings_debug">Debug mode</string>
-    <string name="settings_debug_note">Wave, skill level and the time to the next pickup, down the top left.</string>
+    <string name="settings_debug_note">Wave, skill level, the time to the next pickup and the weapon in hand, down the top left.</string>
     <string name="settings_debug_unlocked">Debug mode is now in the list above.</string>
     <string name="settings_god_mode">God mode</string>
     <string name="settings_god_mode_note">No damage. The marine never dies, so the difficulty only ever climbs.</string>
@@ -115,8 +125,13 @@
     <string name="tab_about">About</string>
 
     <string name="stats_record">Record</string>
-    <string name="stats_kills">Killed</string>
-    <string name="stats_deaths">Killed by</string>
+    <!--
+        No creature is named on this page. The names are ours - an imported WAD draws
+        somebody else's bestiary - so the sprite is the label and these two lines are what it
+        is worth counting.
+    -->
+    <string name="stats_kills">Creatures</string>
+    <string name="stats_legend">Killed by the marine, and below it in red how many times it killed him.</string>
     <string name="stats_pickups">Picked up</string>
     <!--
         Shown instead of empty lists rather than alongside them. A statistics page with four
@@ -132,10 +147,6 @@
         the rule at the top of this file forbids. Weapons are not here because Weapon.name
         already covers them.
     -->
-    <string name="item_stim">Small medical kit</string>
-    <string name="item_medi">Medical kit</string>
-    <string name="item_arm1">Armour</string>
-    <string name="item_arm2">Heavy armour</string>
     <!--
         The one URL this application knows. Both the Source row and the problem report are
         built from it, so a repository that moves is a one-line change and cannot end up
