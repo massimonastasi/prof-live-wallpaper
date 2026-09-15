@@ -11,12 +11,12 @@ and neither may anything derived from it. See [NOTICE.md](NOTICE.md).
 
 <img src="docs/images/scene.png" width="320" alt="A marine firing a chaingun at a creature, two shots in flight, corpses on the floor">
 
-The settings are three tabs: what is drawn and how often, what the fight has come to, and
-where all of it came from.
+Everything is a setting: how often it is drawn, how large, what is behind it, and which
+sprites it uses. The statistics keep the score of a fight nobody is playing.
 
-| Settings | Statistics | About |
+| What is drawn | What it is drawn from | What it came to |
 |---|---|---|
-| <img src="docs/images/settings-1-visual.png" width="240" alt="Frame rate and sprite zoom as rows of buttons, and switches for the health readout and god mode"> | <img src="docs/images/settings-2-statistics.png" width="240" alt="One row per creature: its sprite, how many the marine has killed, and in red how many times it has killed him"> | <img src="docs/images/settings-3-about.png" width="240" alt="What the app is made of and which licences it carries"> |
+| <img src="docs/images/settings-1-visual.png" width="240" alt="Frame rate and sprite zoom as rows of buttons, and switches for the health readout and god mode"> | <img src="docs/images/settings-2-sprites.png" width="240" alt="The background as a dungeon floor, a flat colour from the WAD palette or an image, and the choice between the bundled Freedoom sprites and your own WAD"> | <img src="docs/images/settings-3-statistics.png" width="240" alt="One row per creature: its sprite, how many the marine has killed, and in red how many times it has killed him"> |
 
 ## What it is built from
 
