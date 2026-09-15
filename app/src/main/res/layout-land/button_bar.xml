@@ -13,6 +13,14 @@
     The reset stays the wider of the two by weight, because "Set as wallpaper" is the shorter
     label and a filled button does not need help being found.
 
+    fitsSystemWindows, as in the portrait file and for the same reason, and this file went
+    without it long enough to be reported: CoordinatorLayout shrinks the parent rect by the
+    insets for every child that does not fit them itself, so the bar was laid out above the
+    navigation bar - and SettingsActivity then added that same inset as bottom padding,
+    because its listener finds the bar by id and does not know the orientation. The bar
+    floated clear of the bottom edge with the page showing underneath. The attribute is
+    load-bearing; a copy of this file that drops it reproduces the bug.
+
     Overdraw is a false positive here: this is not the window background but a bar
     pinned over a page that scrolls under it, so it has to paint its own surface.
 -->
@@ -24,6 +32,7 @@
     android:layout_gravity="bottom"
     android:background="?attr/colorSurface"
     android:baselineAligned="false"
+    android:fitsSystemWindows="true"
     android:orientation="horizontal"
     android:padding="16dp"
     tools:ignore="Overdraw">
