@@ -1,5 +1,7 @@
 # Prof Live Wallpaper
 
+<img src="docs/images/store-feature-graphic.png" alt="Prof Live Wallpaper - retro pixel action on your home screen">
+
 An Android live wallpaper: an endless battle on your home screen. Free, no ads, no
 permissions, no network access, nothing collected.
 
@@ -9,12 +11,9 @@ Free is a condition, not a stance: the engine source this borrows from is publis
 non-profit use", so this application carries no advertising, no paid version and no purchases,
 and neither may anything derived from it. See [NOTICE.md](NOTICE.md).
 
-<img src="docs/images/scene.png" width="320" alt="A marine firing a chaingun at a creature, two shots in flight, corpses on the floor">
+<img src="docs/images/store-1-fight.png" width="240" alt="A firefight over a brown floor, plasma and fireballs in flight, corpses where the fight has already been"> <img src="docs/images/store-2-creature.png" width="240" alt="The marine facing a creature twice his size, medical kits and corpses between them"> <img src="docs/images/store-3-floors.png" width="240" alt="The same fight on a green floor, which is what the difficulty looks like from outside">
 
-Everything is a setting: how often it is drawn, how large, what is behind it, and which
-sprites it uses. The statistics keep the score of a fight nobody is playing.
-
-| What is drawn | What it is drawn from | What it came to |
+| Settings - Visual | Settings - Sprites | Statistics |
 |---|---|---|
 | <img src="docs/images/settings-1-visual.png" width="240" alt="Frame rate and sprite zoom as rows of buttons, and switches for the health readout and god mode"> | <img src="docs/images/settings-2-sprites.png" width="240" alt="The background as a dungeon floor, a flat colour from the WAD palette or an image, and the choice between the bundled Freedoom sprites and your own WAD"> | <img src="docs/images/settings-3-statistics.png" width="240" alt="One row per creature: its sprite, how many the marine has killed, and in red how many times it has killed him"> |
 
