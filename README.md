@@ -9,9 +9,14 @@ Free is a condition, not a stance: the engine source this borrows from is publis
 non-profit use", so this application carries no advertising, no paid version and no purchases,
 and neither may anything derived from it. See [NOTICE.md](NOTICE.md).
 
-| The wallpaper | The settings |
-|---|---|
-| <img src="docs/images/scene.png" width="320" alt="A marine firing a chaingun at a creature, two shots in flight, corpses on the floor"> | <img src="docs/images/settings.png" width="320" alt="The settings screen"> |
+<img src="docs/images/scene.png" width="320" alt="A marine firing a chaingun at a creature, two shots in flight, corpses on the floor">
+
+The settings are three tabs: what is drawn and how often, what the fight has come to, and
+where all of it came from.
+
+| Settings | Statistics | About |
+|---|---|---|
+| <img src="docs/images/settings-1-visual.png" width="240" alt="Frame rate and sprite zoom as rows of buttons, and switches for the health readout and god mode"> | <img src="docs/images/settings-2-statistics.png" width="240" alt="One row per creature: its sprite, how many the marine has killed, and in red how many times it has killed him"> | <img src="docs/images/settings-3-about.png" width="240" alt="What the app is made of and which licences it carries"> |
 
 ## What it is built from
 
