@@ -268,14 +268,22 @@
                 tools:shapeAppearance="@style/ShapeAppearance.Material3.MediumComponent">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/zoom_075"
+                    android:id="@+id/zoom_080"
                     style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:backgroundTint="@color/segmented_container"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:minWidth="0dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    app:autoSizeTextType="uniform"
+                    app:autoSizeMaxTextSize="14sp"
+                    app:autoSizeMinTextSize="10sp"
                     android:saveEnabled="false"
-                    android:text="@string/zoom_075"
+                    android:text="@string/zoom_080"
                     app:strokeColor="@color/segmented_stroke" />
 
                 <com.google.android.material.button.MaterialButton
@@ -285,30 +293,54 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:backgroundTint="@color/segmented_container"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:minWidth="0dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    app:autoSizeTextType="uniform"
+                    app:autoSizeMaxTextSize="14sp"
+                    app:autoSizeMinTextSize="10sp"
                     android:saveEnabled="false"
                     android:text="@string/zoom_100"
                     app:strokeColor="@color/segmented_stroke" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/zoom_125"
+                    android:id="@+id/zoom_120"
                     style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:backgroundTint="@color/segmented_container"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:minWidth="0dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    app:autoSizeTextType="uniform"
+                    app:autoSizeMaxTextSize="14sp"
+                    app:autoSizeMinTextSize="10sp"
                     android:saveEnabled="false"
-                    android:text="@string/zoom_125"
+                    android:text="@string/zoom_120"
                     app:strokeColor="@color/segmented_stroke" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/zoom_150"
+                    android:id="@+id/zoom_140"
                     style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:backgroundTint="@color/segmented_container"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:minWidth="0dp"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    app:autoSizeTextType="uniform"
+                    app:autoSizeMaxTextSize="14sp"
+                    app:autoSizeMinTextSize="10sp"
                     android:saveEnabled="false"
-                    android:text="@string/zoom_150"
+                    android:text="@string/zoom_140"
                     app:strokeColor="@color/segmented_stroke" />
 
 

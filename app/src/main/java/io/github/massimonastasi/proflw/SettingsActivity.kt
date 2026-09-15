@@ -368,9 +368,19 @@ class SettingsActivity : AppCompatActivity() {
      */
     private fun showZoom() {
         val group = findViewById<MaterialButtonToggleGroup>(R.id.zoom_group)
-        val ids = intArrayOf(R.id.zoom_075, R.id.zoom_100, R.id.zoom_125, R.id.zoom_150)
-        val values = floatArrayOf(0.75f, 1f, 1.25f, 1.5f)
-        group.check(ids[values.indexOfFirst { it == Settings.zoom(prefs) }.coerceAtLeast(0)])
+        val ids = intArrayOf(R.id.zoom_080, R.id.zoom_100, R.id.zoom_120, R.id.zoom_140)
+        val values = floatArrayOf(0.8f, 1f, 1.2f, 1.4f)
+        // The nearest step, not an exact match: an install from before these four values
+        // holds 0.75, 1.25 or 1.5, and none of them is on the row any more. The snapped
+        // value is written back here rather than left to the listener, which is registered
+        // below and so does not hear this first check - without the write the row would
+        // read 1.4 while the wallpaper went on drawing at 1.5.
+        val current = Settings.zoom(prefs)
+        val nearest = values.indices.minByOrNull { abs(values[it] - current) } ?: 0
+        if (values[nearest] != current) {
+            prefs.edit { putString(Settings.KEY_ZOOM, values[nearest].toString()) }
+        }
+        group.check(ids[nearest])
         group.addOnButtonCheckedListener { _, id, checked ->
             if (!checked) return@addOnButtonCheckedListener
             val zoom = values[ids.indexOf(id).coerceAtLeast(0)]

@@ -47,15 +47,16 @@
     -->
     <string name="wad_too_few">That WAD carries only %d of the creatures this wallpaper draws. It names its creatures differently, so it cannot be used.</string>
     <!--
-        The zoom labels are the multiplier and nothing else: five of them share one row, and
-        "0.75x" is already as wide as that row affords. 1.75x was tried and dropped: at that
-        size the largest creature covers two fifths of the screen's width.
+        The zoom labels are the bare number: four of them share one row, and the "x" they used
+        to carry was the character that pushed "0.75x" past what the row affords. The note above
+        says what the number multiplies. 1.75 was tried and dropped: at that size the largest
+        creature covers two fifths of the screen's width.
     -->
-    <string name="settings_zoom_note">How large the fighters are drawn.</string>
-    <string name="zoom_075">0.75x</string>
-    <string name="zoom_100">1x</string>
-    <string name="zoom_125">1.25x</string>
-    <string name="zoom_150">1.5x</string>
+    <string name="settings_zoom_note">How large the fighters are drawn, in multiples of their original size.</string>
+    <string name="zoom_080">0.8</string>
+    <string name="zoom_100">1</string>
+    <string name="zoom_120">1.2</string>
+    <string name="zoom_140">1.4</string>
     <string name="settings_about">About</string>
     <!--
         The order is the argument, not a ranking. What this app is, where the idea came from,
