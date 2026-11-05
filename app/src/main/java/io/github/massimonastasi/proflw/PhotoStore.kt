@@ -62,14 +62,18 @@ object PhotoStore {
     fun import(context: Context, uri: Uri): Boolean = try {
         context.contentResolver.openInputStream(uri).use { input ->
             requireNotNull(input)
-            File(context.filesDir, NAME).outputStream().use { input.copyTo(it) }
+            File(context.filesDir, NAME).outputStream().use { ImportLimits.copy(input, it) }
         }
         // Decoded once here so an unreadable image is refused now rather than leaving the
         // wallpaper with a backdrop it cannot draw.
-        val ok = load(context, 1080, 2400) != null
+        val decoded = load(context, 1080, 2400)
+        val ok = decoded != null
+        decoded?.recycle()
         if (ok) {
             context.getSharedPreferences(Settings.FILE, Context.MODE_PRIVATE)
                 .edit { putString(KEY_NAME, displayName(context, uri)) }
+        } else {
+            clear(context)
         }
         ok
     } catch (e: Exception) {
@@ -101,10 +105,7 @@ object PhotoStore {
             BitmapFactory.decodeFile(f.path, bounds)
             if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
 
-            var sample = 1
-            while (bounds.outWidth / (sample * 2) >= width && bounds.outHeight / (sample * 2) >= height) {
-                sample *= 2
-            }
+            val sample = ImportLimits.photoSample(bounds.outWidth, bounds.outHeight, width, height)
             BitmapFactory.decodeFile(f.path, BitmapFactory.Options().apply { inSampleSize = sample })
         } catch (e: Exception) {
             Log.w(TAG, "photo decode failed", e)

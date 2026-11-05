@@ -3,13 +3,13 @@
 <img src="docs/images/store-feature-graphic.png" alt="Prof Live Wallpaper - retro pixel action on your home screen">
 
 An Android live wallpaper: an endless battle on your home screen. Free, no ads, no
-permissions, no network access, nothing collected.
+runtime permissions or automatic telemetry. Optional reports are previewed before sharing through your browser.
 
 **[On Google Play](https://play.google.com/store/apps/details?id=io.github.massimonastasi.proflw)**, or as a signed APK on every [release](../../releases).
 
-Free is a condition, not a stance: the engine source this borrows from is published "for your
-non-profit use", so this application carries no advertising, no paid version and no purchases,
-and neither may anything derived from it. See [NOTICE.md](NOTICE.md).
+The author distributes this app without advertising, a paid version or purchases.
+The code is distributed under GPL-2.0; this does not impose a non-commercial
+restriction on recipients. See [NOTICE.md](NOTICE.md).
 
 <table>
 <tr>
@@ -46,7 +46,7 @@ lumps in **Phase 2, version 0.13.0** — nothing added, nothing altered, the unu
 
 **Behaviour: [id-Software/DOOM](https://github.com/id-Software/DOOM)** (GPL-2.0, rights held
 by ZeniMax Media Inc.), the engine source release — which is why this application is GPL-2.0
-too, and why it is free. No code was copied: the constants and algorithms were reimplemented
+too. No code was copied: the constants and algorithms were reimplemented
 in Kotlin, each carrying a comment naming the file and symbol it came from. What was taken:
 
 | Source | Used for |
@@ -186,9 +186,9 @@ is why it and `keystore.properties` are outside version control.
    winget install --id Google.PlatformTools -e
    ```
 
-3. Download Freedoom from <https://freedoom.github.io>, put its `freedoom2.wad` at
-   `app/wad/freedoom-full.wad`, and run:
+3. Prepare the pinned Freedoom 0.13.0 asset (Python 3, SHA-256 verified), then reduce it:
    ```
+   python tools/prepare-assets.py
    gradlew reduceWad
    ```
    That writes `app/src/main/assets/freedoom2.wad` containing only the lumps the wallpaper
@@ -206,7 +206,7 @@ is why it and `keystore.properties` are outside version control.
    *Settings → Wallpaper → Live wallpapers* and pick it.
 
 The emulator works for rendering but is not representative of power consumption. `gradlew test`
-runs 68 JVM tests, including an hour-long simulation that pins the top of the skill ladder;
+runs the JVM test suite, including an hour-long simulation that pins the top of the skill ladder;
 none of them launches the app.
 
 ## Licences

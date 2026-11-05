@@ -99,9 +99,9 @@ object CrashLog {
      * A GitHub issue, filled in and left for the user to send.
      *
      * The whole exchange happens in their browser: this builds a URL, the browser opens it,
-     * they read the body, they edit or discard it, and nothing is transmitted until they press
-     * the button on GitHub's own page. That is the entire reason for doing it this way rather
-     * than posting a payload - not that a POST would be hard, but that it would be invisible.
+     * and GitHub receives the URL parameters when the page loads. SettingsActivity must
+     * show the payload and obtain consent before opening this URL. Publishing the issue
+     * is a separate action in the browser.
      *
      * The facts included are the ones that have actually been needed to reproduce something
      * here: the device and its Android version, which build is running, the frame rate, and
@@ -161,11 +161,21 @@ object CrashLog {
             // Truncated: a URL has a practical length limit in browsers and servers alike, and
             // the top of a stack trace is where the fault is. The whole file stays on the
             // device for anyone who asks for the rest.
-            appendLine(trace.take(TRACE_LIMIT))
+            appendLine(safeTrace(trace).take(TRACE_LIMIT))
             appendLine("```")
             appendLine("</details>")
         }
     }
+
+    /** Keep exception types and stack frames, never exception messages or file paths. */
+    fun safeTrace(trace: String): String = trace.lineSequence().mapNotNull { line ->
+        val trimmed = line.trim()
+        when {
+            trimmed.matches(Regex("at [A-Za-z0-9_.$/]+\\([^\\r\\n/\\\\]*\\)")) -> trimmed
+            else -> Regex("^(?:Caused by: |Suppressed: )?([A-Za-z_$][A-Za-z0-9_.$]*(?:Exception|Error))(?::|$)")
+                .find(trimmed)?.groupValues?.get(1)
+        }
+    }.joinToString("\n")
 
     const val TRACE_LIMIT = 4000
 }

@@ -1,55 +1,52 @@
 # Privacy policy
 
-**Prof Live Wallpaper collects nothing.**
+Prof Live Wallpaper by Massimo Nastasi — updated 5 November 2026 for version 1.2.5.
 
-That is the whole policy, and it is a property of the build rather than a promise. What
-follows is how you can check it.
+## Offline operation
 
-## No data leaves the device
+The wallpaper has no ads, analytics, accounts or automatic diagnostic uploads.
+It does not request internet, location, camera or broad storage permissions.
+Files are chosen through Android's system picker. AndroidX adds an internal
+signature-protected receiver permission, not access to personal information.
 
-The application requests **no permission that grants access to anything** — not internet,
-not storage, not location, not the camera, not identifiers. Android would refuse a network
-connection it never asked for, so there is no analytics, no crash reporting service, no
-advertising identifier and no telemetry: there is no channel any of those could use.
+## Local data and deletion
 
-The manifest in this repository declares no permissions whatsoever. The built package
-contains exactly one entry, `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, which is not a system
-permission and is not a request for anything: it is defined by the AndroidX libraries inside
-this application's own namespace, and its only effect is that a broadcast receiver registered
-at runtime is not left open to other applications. It is a lock, not a key.
+The app stores preferences, statistics, imported photographs and reduced copies
+of imported WADs in its private storage. Originals are not modified. If the app
+crashes, it also saves the latest crash time, thread and stack trace locally.
+This log may contain exception messages or paths; it is not automatically sent.
+A new crash replaces the previous log. Reset everything removes these local data,
+including the crash log. Uninstalling removes the app's local data as well.
 
-That distinction is written down because it is the sort of thing a policy should not gloss
-over: the claim here is checkable with `aapt2 dump permissions` on the APK, and this is what
-that command reports.
+Version 1.2.5 disables Android cloud backup and explicitly excludes app data from
+Android device transfer. Settings and imported content must be configured again
+on a new device. This change does not retroactively delete backups made by earlier
+versions; those are managed through the user's Android backup provider.
 
-There is no account, no sign-in and no server. Nothing is uploaded, and nothing is
-downloaded after installation.
+## Optional problem reports and external pages
 
-## What stays on the device
+Report a problem first displays an on-device preview. If you choose Share with
+GitHub, your browser sends the previewed details to GitHub in the page URL as soon
+as it loads. Details include device manufacturer/model, Android and app versions,
+frame rate, whether bundled or imported sprites are used, and a limited diagnostic
+trace. Shared traces retain exception types and stack frames, with exception
+messages omitted. Imported photos and WADs are never attached. Cancel sends no
+report. You can separately delete the local crash log in the preview dialog.
 
-Two kinds of file, both written by you and both inside the application's private storage,
-where no other application can read them:
+The URL can remain in browser history. Opening the page is different from publishing
+an issue: you can edit or discard the issue on GitHub. If you publish it, the issue
+and its contents are public and subject to GitHub's privacy and retention policies.
+The developer uses reports to diagnose problems. You can edit/delete your own issue
+content or contact the developer about a report. GitHub controls its own server logs.
 
-- **Your settings** — frame rate, which background, god mode, and how many times the wave
-  table has been finished. A handful of values in the application's own preferences.
-- **Files you import** — a WAD or a photograph you choose yourself, through the system
-  picker. They are copied in because the wallpaper reads them constantly and a document
-  permission can be revoked between one launch and the next. The originals are untouched
-  where they live.
+Source, licences-related external links and this privacy link open in your browser.
+External websites receive normal web-request information, such as IP address and
+browser information, under their own policies. GitHub's privacy statement:
+https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement
 
-Both are removed when you uninstall the application, and *Reset everything* in the settings
-deletes them immediately.
+## Audience and contact
 
-## Children
-
-Nothing here is directed at children, and since nothing is collected, nothing about a child
-could be collected either.
-
-## Changes
-
-This file lives in the source repository alongside the code it describes, so any change to
-it is a commit with a date and a diff.
-
-## Contact
-
-Open an issue on the project's repository.
+The app is not directed at children. It contains animated pixel combat.
+For privacy questions contact googleplay@fuligo.it, or use the project's issue
+tracker without posting private information. Changes to this policy are recorded
+in the public source repository.
