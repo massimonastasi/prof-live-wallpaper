@@ -534,6 +534,13 @@
                     android:layout_marginTop="@dimen/list_row_gap" />
 
                 <include
+                    android:id="@+id/row_privacy"
+                    layout="@layout/list_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/list_row_gap" />
+
+                <include
                     android:id="@+id/row_report"
                     layout="@layout/list_row"
                     android:layout_width="match_parent"

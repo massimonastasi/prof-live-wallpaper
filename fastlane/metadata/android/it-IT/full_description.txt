@@ -1,0 +1,9 @@
+Una battaglia pixel senza fine come sfondo animato Android.
+
+Quattordici creature, pavimenti variabili, rifornimenti e difficoltà progressiva. Regola frequenza dei fotogrammi e zoom, scegli un colore o una tua foto e consulta le statistiche.
+
+Gratis, senza pubblicità né telemetria automatica. Grafica Freedoom e codice sorgente GPL disponibile. Le segnalazioni facoltative mostrano un’anteprima prima della condivisione tramite browser. Foto e WAD importati restano nello spazio privato dell’app, esclusi dal backup Android e dal trasferimento dispositivo.
+
+Puoi importare un WAD compatibile che hai diritto di usare. Nessun asset commerciale viene incluso o scaricato. Contiene combattimenti animati in pixel art. Richiede Android 12 o successivo e un launcher compatibile con sfondi animati.
+
+Progetto indipendente, non affiliato né approvato da Freedoom o id Software.

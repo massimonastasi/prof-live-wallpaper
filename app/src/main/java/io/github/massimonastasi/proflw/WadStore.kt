@@ -138,7 +138,7 @@ object WadStore {
         try {
             context.contentResolver.openInputStream(uri).use { input ->
                 if (input == null) return context.getString(R.string.wad_unreadable)
-                staged.outputStream().use { input.copyTo(it) }
+                staged.outputStream().use { ImportLimits.copy(input, it) }
             }
         } catch (e: Exception) {
             Log.w(TAG, "WAD copy failed", e)

@@ -24,8 +24,12 @@ android {
          * arithmetic leaves room for 100 patches and 100 minors per major, and is monotonic
          * as long as the name only ever goes up.
          */
-        versionName = "1.2.4"
+        versionName = "1.2.5"
         versionCode = versionName!!.split(".").map { it.toInt() }
+            .also { parts ->
+                require(parts.size == 3 && parts[0] in 0..209999 &&
+                    parts[1] in 0..99 && parts[2] in 0..99) { "Invalid semantic version" }
+            }
             .let { (major, minor, patch) -> major * 10000 + minor * 100 + patch }
     }
 

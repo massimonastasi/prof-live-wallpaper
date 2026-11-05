@@ -33,6 +33,18 @@ import kotlin.test.assertTrue
  */
 class CrashLogTest {
 
+    @Test
+    fun `shared traces omit messages paths and addresses`() {
+        val text = body("java.lang.IllegalArgumentException: content://private/photo user@example.com\n" +
+            "\tat io.github.massimonastasi.proflw.Scene.tick(Scene.kt:12)\n" +
+            "Caused by: java.io.IOException: /storage/emulated/0/private.jpg")
+        assertTrue("IllegalArgumentException" in text)
+        assertTrue("Scene.kt:12" in text)
+        assertFalse("user@example.com" in text)
+        assertFalse("content://" in text)
+        assertFalse("private.jpg" in text)
+    }
+
     private fun body(trace: String?) = CrashLog.issueBody(
         device = "Google Pixel 6a",
         android = "16 (API 36)",
