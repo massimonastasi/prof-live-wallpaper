@@ -266,6 +266,9 @@ tasks.register("reduceWad") {
         result[9] = (dirOffset shr 8).toByte()
         result[10] = (dirOffset shr 16).toByte()
         result[11] = (dirOffset shr 24).toByte()
+        check(target.parentFile.isDirectory || target.parentFile.mkdirs()) {
+            "cannot create assets directory: ${target.parentFile}"
+        }
         target.writeBytes(result)
 
         val before = source.length() / 1024
