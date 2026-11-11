@@ -1,0 +1,9 @@
+An endless pixel battle as your Android live wallpaper.
+
+Watch fourteen creatures, changing dungeon floors, supply drops and an adaptive difficulty ladder. Set the frame rate and sprite zoom, choose a solid colour or your own photo, and view combat statistics.
+
+Free, without ads or automatic telemetry. Artwork from Freedoom; GPL source code available. Optional problem reports are previewed before sharing through your browser. Imported photos and WADs stay in private app storage and are excluded from Android backup and device transfer.
+
+You may optionally import a compatible WAD you have the right to use. No commercial game assets are included or downloaded. Includes animated pixel combat. Requires Android 12 or newer and a launcher supporting live wallpapers.
+
+Independent project, not affiliated with or endorsed by Freedoom or id Software.

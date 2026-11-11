@@ -69,7 +69,7 @@ class WadFile(private val buf: ByteBuffer) {
 
         val count = buf.getInt(4)
         val dirOffset = buf.getInt(8)
-        if (count <= 0 || dirOffset <= 0 || dirOffset + count * 16 > buf.capacity()) {
+        if (count !in 1..100000 || dirOffset < 12 || dirOffset.toLong() + count.toLong() * 16 > buf.limit()) {
             throw NotAWadException("invalid directory ($count lumps @ $dirOffset)")
         }
 
@@ -83,6 +83,10 @@ class WadFile(private val buf: ByteBuffer) {
             val e = dirOffset + i * 16
             lumpPos[i] = buf.getInt(e)
             lumpSize[i] = buf.getInt(e + 4)
+            if (lumpPos[i] < 0 || lumpSize[i] < 0 ||
+                lumpPos[i].toLong() + lumpSize[i] > buf.limit()) {
+                throw NotAWadException("invalid lump bounds")
+            }
             name.setLength(0)
             for (c in 0..7) {
                 val b = buf.get(e + 8 + c).toInt() and 0xFF
@@ -95,6 +99,7 @@ class WadFile(private val buf: ByteBuffer) {
         }
 
         val pal = byName["PLAYPAL"] ?: throw NotAWadException("PLAYPAL missing")
+        if (lumpSize[pal] < 768) throw NotAWadException("PLAYPAL too short")
         val p = lumpPos[pal]
         for (i in 0 until 256) {
             val r = buf.get(p + i * 3).toInt() and 0xFF
@@ -152,6 +157,7 @@ class WadFile(private val buf: ByteBuffer) {
         if (lumpSize[index] < 4) return 0
         val w = (buf.get(p).toInt() and 0xFF) or ((buf.get(p + 1).toInt() and 0xFF) shl 8)
         val h = (buf.get(p + 2).toInt() and 0xFF) or ((buf.get(p + 3).toInt() and 0xFF) shl 8)
+        require(w in 1..4096 && h in 1..4096 && w.toLong() * h <= 1048576) { "patch too large" }
         return w * h * 4
     }
 
@@ -174,6 +180,7 @@ class WadFile(private val buf: ByteBuffer) {
 
     /** Decodes a flat: 4096 raw bytes, one palette index per pixel. */
     fun decodeFlat(index: Int): Patch {
+        require(lumpSize[index] == FLAT_SIZE * FLAT_SIZE) { "invalid flat size" }
         val p = lumpPos[index]
         val pixels = IntArray(FLAT_SIZE * FLAT_SIZE)
         for (i in pixels.indices) pixels[i] = palette[buf.get(p + i).toInt() and 0xFF]
@@ -188,20 +195,28 @@ class WadFile(private val buf: ByteBuffer) {
      * to deal with.
      */
     fun decodePatch(index: Int): Patch {
+        require(lumpSize[index] >= 8) { "truncated patch" }
         val p = lumpPos[index]
         val w = buf.getShort(p).toInt() and 0xFFFF
         val h = buf.getShort(p + 2).toInt() and 0xFFFF
         val xOff = buf.getShort(p + 4).toInt()      // signed
         val yOff = buf.getShort(p + 6).toInt()
         require(w in 1..4096 && h in 1..4096) { "patch ${lumpName[index]} has size $w x $h" }
+        require(w.toLong() * h <= 1048576 && 8L + w * 4L <= lumpSize[index]) { "invalid patch size" }
+        val end = p + lumpSize[index]
 
         val pixels = IntArray(w * h)                 // 0 = transparent
         for (x in 0 until w) {
-            var o = p + buf.getInt(p + 8 + x * 4)
+            val offset = buf.getInt(p + 8 + x * 4)
+            require(offset >= 8 + w * 4 && offset < lumpSize[index]) { "invalid patch column" }
+            var o = p + offset
             while (true) {
+                require(o < end) { "unterminated patch column" }
                 val topDelta = buf.get(o).toInt() and 0xFF
                 if (topDelta == 0xFF) break
+                require(o.toLong() + 4 <= end) { "truncated patch post" }
                 val len = buf.get(o + 1).toInt() and 0xFF
+                require(o.toLong() + len + 4 <= end) { "truncated patch pixels" }
                 o += 3                                // skip the unused byte
                 for (k in 0 until len) {
                     val y = topDelta + k

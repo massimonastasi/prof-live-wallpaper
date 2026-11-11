@@ -24,8 +24,12 @@ android {
          * arithmetic leaves room for 100 patches and 100 minors per major, and is monotonic
          * as long as the name only ever goes up.
          */
-        versionName = "1.2.4"
+        versionName = "1.2.5"
         versionCode = versionName!!.split(".").map { it.toInt() }
+            .also { parts ->
+                require(parts.size == 3 && parts[0] in 0..209999 &&
+                    parts[1] in 0..99 && parts[2] in 0..99) { "Invalid semantic version" }
+            }
             .let { (major, minor, patch) -> major * 10000 + minor * 100 + patch }
     }
 
@@ -262,6 +266,9 @@ tasks.register("reduceWad") {
         result[9] = (dirOffset shr 8).toByte()
         result[10] = (dirOffset shr 16).toByte()
         result[11] = (dirOffset shr 24).toByte()
+        check(target.parentFile.isDirectory || target.parentFile.mkdirs()) {
+            "cannot create assets directory: ${target.parentFile}"
+        }
         target.writeBytes(result)
 
         val before = source.length() / 1024

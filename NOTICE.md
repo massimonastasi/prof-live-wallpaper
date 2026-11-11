@@ -13,22 +13,19 @@ Source: <https://github.com/id-Software/DOOM>, released under GPL-2.0. The sourc
 carry the id Software copyright quoted below; the rights are now held by **ZeniMax Media
 Inc.**, which is how that repository states its own copyright.
 
-**Non-profit use.** That repository's README says the source "is released for your non-profit
-use." GPL-2.0 itself permits charging a fee, so the two do not say the same thing, and this
-project resolves the difference by taking the narrower reading: **this application is free,
-carries no advertising, no paid version and no purchases of any kind, and is not to be
-monetised in any form.** That is a condition of using this material, not a preference, and it
-binds anyone who takes this work further under the same terms.
+**Licence provenance.** The upstream repository at commit
+`a77dfb96cb91780ca334d0d4cfd86957558007e0` distributes `LICENSE.TXT` containing
+GNU GPL version 2. Its historical README and file comments retain references to
+the earlier source release. This project relies on the GPL distribution; it does
+not add a non-commercial condition to that licence. The author's choice to offer
+this app without ads or payments is not a restriction on downstream recipients.
+The combined application is distributed under GPL version 2. Original application
+file headers also permit later versions for the author's contributions; no broader
+licence grant is asserted here for third-party material.
 
-> Copyright (C) 1993-1996 id Software, Inc.
->
-> This program is free software; you can redistribute it and/or modify it under the terms
-> of the GNU General Public License as published by the Free Software Foundation; either
-> version 2 of the License, or (at your option) any later version.
->
-> This program is distributed in the hope that it will be useful, but WITHOUT ANY
-> WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-> PARTICULAR PURPOSE. See the GNU General Public License for more details.
+Copyright (C) 1993-1996 id Software, Inc. See the upstream source and LICENSE.TXT.
+The earlier version of this notice incorrectly presented a GPL header as a direct
+quotation from these upstream source files; that quotation has been removed.
 
 **What is taken.** No engine code is used: there is no renderer, no BSP traversal, no
 level loading and no play simulation from that source. What is reproduced are gameplay
@@ -115,5 +112,5 @@ Freedoom project, by id Software LLC, or by any other rights holder. Trademarks 
 to others are the property of their respective owners.
 
 No commercial game data is distributed here in any form. A user may point the application
-at an IWAD they already own, which is read from their own device and never copied,
-uploaded or redistributed.
+at an IWAD they already own, which is copied and reduced into private app storage on their device, not uploaded
+or redistributed by this application.

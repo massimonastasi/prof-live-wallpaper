@@ -591,16 +591,28 @@ class SettingsActivity : AppCompatActivity() {
             openLicences()
         }
 
+        link(R.id.row_privacy, R.string.settings_privacy, getString(R.string.settings_privacy_note)) {
+            open(getString(R.string.repo_url) + "/blob/main/PRIVACY.md")
+        }
+
         // The report says something different when there is a trace waiting, because that is
         // the one moment the row is worth noticing rather than being a permanent offer.
         val crashed = CrashLog.read(this) != null
         val note = if (crashed) R.string.settings_report_crash_note else R.string.settings_report_note
         link(R.id.row_report, R.string.settings_report, getString(note)) {
-            open(CrashLog.issueUrl(this, prefs))
-            // Cleared on the way out, not on return: the user has seen it, and a trace that
-            // reappears every time the screen opens reads as an app still broken.
-            CrashLog.clear(this)
-            showAbout()
+            val report = CrashLog.issueUrl(this, prefs).toUri()
+            AlertDialog.Builder(this)
+                .setTitle(R.string.settings_report)
+                .setMessage(getString(R.string.settings_report_consent) + "\n\n" + report.getQueryParameter("body"))
+                .setPositiveButton(R.string.settings_report_continue) { _, _ ->
+                    open(report.toString())
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .setNeutralButton(R.string.settings_report_delete) { _, _ ->
+                    CrashLog.clear(this)
+                    showAbout()
+                }
+                .show()
         }
     }
 
@@ -939,6 +951,7 @@ class SettingsActivity : AppCompatActivity() {
                 prefs.edit { clear() }
                 WadStore.clear(this)
                 PhotoStore.clear(this)
+                CrashLog.clear(this)
                 loadWad()
                 // Recreated rather than refreshed: every row's value has changed underneath
                 // the views, and rebuilding is the honest way to show that.
